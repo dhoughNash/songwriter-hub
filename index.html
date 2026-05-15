@@ -1,0 +1,2404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Songwriter Royalty Hub</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root {
+  --cream: #F5F0E8;
+  --warm-white: #FDFAF5;
+  --ink: #1A1612;
+  --ink-light: #4A4440;
+  --ink-muted: #8A837D;
+  --gold: #C9A84C;
+  --gold-light: #E8D5A0;
+  --gold-muted: #F0E6C8;
+  --rust: #B85C3A;
+  --sage: #4A6741;
+  --border: rgba(26,22,18,0.12);
+  --border-strong: rgba(26,22,18,0.22);
+  --shadow: 0 2px 12px rgba(26,22,18,0.08);
+  --shadow-lg: 0 8px 32px rgba(26,22,18,0.12);
+  --radius: 4px;
+  --radius-lg: 8px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--cream);
+  color: var(--ink);
+  min-height: 100vh;
+  font-size: 14px;
+}
+
+/* HEADER */
+.header {
+  background: var(--ink);
+  padding: 0 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 56px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  border-bottom: 1px solid rgba(201,168,76,0.3);
+}
+
+.logo {
+  font-family: 'Playfair Display', serif;
+  font-size: 18px;
+  color: var(--gold);
+  letter-spacing: 0.02em;
+}
+
+.logo span {
+  color: rgba(245,240,232,0.5);
+  font-size: 12px;
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 300;
+  margin-left: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.header-right {
+  font-size: 11px;
+  color: rgba(245,240,232,0.35);
+  font-family: 'DM Mono', monospace;
+}
+
+/* NAV */
+.nav {
+  background: var(--warm-white);
+  border-bottom: 1px solid var(--border);
+  padding: 0 2rem;
+  display: flex;
+  gap: 0;
+  overflow-x: auto;
+}
+
+.nav-tab {
+  padding: 14px 20px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink-muted);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  white-space: nowrap;
+  transition: all 0.15s;
+  letter-spacing: 0.01em;
+  background: none;
+  border-top: none;
+  border-left: none;
+  border-right: none;
+}
+
+.nav-tab:hover { color: var(--ink); }
+.nav-tab.active { color: var(--ink); border-bottom-color: var(--gold); }
+
+/* MAIN */
+.main { max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem; }
+
+.section { display: none; }
+.section.active { display: block; }
+
+/* CARDS */
+.card {
+  background: var(--warm-white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  margin-bottom: 1rem;
+  box-shadow: var(--shadow);
+}
+
+.card-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 1.25rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border);
+}
+
+/* FIELDS */
+.field-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; }
+.field { display: flex; flex-direction: column; gap: 6px; }
+.field label { font-size: 11px; font-weight: 500; color: var(--ink-muted); text-transform: uppercase; letter-spacing: 0.07em; }
+.field input, .field select, .field textarea {
+  padding: 9px 12px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  background: var(--cream);
+  color: var(--ink);
+  font-size: 13px;
+  font-family: 'DM Sans', sans-serif;
+  transition: border-color 0.15s;
+}
+.field input:focus, .field select:focus, .field textarea:focus {
+  outline: none;
+  border-color: var(--gold);
+  background: #fff;
+}
+.field textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
+.req { color: var(--rust); font-size: 10px; margin-left: 3px; }
+
+/* WRITER ROWS */
+.writer-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr auto;
+  gap: 10px;
+  align-items: end;
+  margin-bottom: 10px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+}
+.writer-row:last-child { border-bottom: none; margin-bottom: 0; }
+.writer-row .field label { font-size: 10px; }
+
+/* BUTTONS */
+.btn {
+  padding: 9px 18px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border-strong);
+  background: var(--warm-white);
+  color: var(--ink);
+  cursor: pointer;
+  font-size: 13px;
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 500;
+  transition: all 0.15s;
+  letter-spacing: 0.01em;
+}
+.btn:hover { background: var(--cream); border-color: var(--ink-muted); }
+.btn.primary { background: var(--ink); color: var(--gold); border-color: var(--ink); }
+.btn.primary:hover { background: #2A2420; }
+.btn.gold { background: var(--gold); color: var(--ink); border-color: var(--gold); font-weight: 600; }
+.btn.gold:hover { background: #B8943C; }
+.btn.success { background: #EAF3E4; color: var(--sage); border-color: #C2DDB8; }
+.btn-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 1.25rem; }
+.add-btn {
+  width: 100%;
+  padding: 9px;
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--ink-muted);
+  cursor: pointer;
+  font-size: 12px;
+  font-family: 'DM Sans', sans-serif;
+  margin-top: 8px;
+  transition: all 0.15s;
+}
+.add-btn:hover { background: var(--gold-muted); border-color: var(--gold); color: var(--ink); }
+.remove-btn {
+  padding: 6px 10px;
+  border: none;
+  background: transparent;
+  color: var(--ink-muted);
+  cursor: pointer;
+  font-size: 15px;
+  border-radius: var(--radius);
+  transition: all 0.15s;
+}
+.remove-btn:hover { background: #FAEAE5; color: var(--rust); }
+
+/* VAULT */
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+}
+.page-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 22px;
+  color: var(--ink);
+}
+.page-sub { font-size: 12px; color: var(--ink-muted); margin-top: 2px; }
+
+.song-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 1.25rem;
+  background: var(--warm-white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  margin-bottom: 8px;
+  cursor: pointer;
+  transition: all 0.15s;
+  box-shadow: var(--shadow);
+}
+.song-row:hover { border-color: var(--gold); transform: translateY(-1px); box-shadow: var(--shadow-lg); }
+.song-title-text { font-family: 'Playfair Display', serif; font-size: 15px; font-weight: 500; color: var(--ink); }
+.song-meta { font-size: 12px; color: var(--ink-muted); margin-top: 3px; }
+.badges { display: flex; gap: 6px; flex-wrap: wrap; }
+.badge {
+  font-size: 10px;
+  padding: 3px 8px;
+  border-radius: 99px;
+  font-weight: 500;
+  font-family: 'DM Mono', monospace;
+  letter-spacing: 0.03em;
+}
+.badge.registered { background: #EAF3E4; color: var(--sage); }
+.badge.pending { background: #FEF3E2; color: #8A5A0A; }
+.badge.responded { background: #E4EFF8; color: #1A4A7A; }
+.badge.invited { background: #FEF3E2; color: #8A5A0A; }
+.badge.none { background: var(--cream); color: var(--ink-muted); border: 1px solid var(--border); }
+.pct-total { font-size: 12px; font-weight: 500; margin-top: 8px; font-family: 'DM Mono', monospace; }
+.pct-ok { color: var(--sage); }
+.pct-err { color: var(--rust); }
+.hint { font-size: 11px; color: var(--ink-muted); line-height: 1.6; margin-top: 6px; }
+.empty { text-align: center; padding: 3rem 1rem; color: var(--ink-muted); font-size: 13px; }
+.empty-icon { font-size: 32px; margin-bottom: 10px; opacity: 0.4; }
+
+/* ORG GRID */
+.org-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; margin-bottom: 1.5rem; }
+.org-card {
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  padding: 1rem;
+  cursor: pointer;
+  transition: all 0.15s;
+  text-align: center;
+  background: var(--warm-white);
+}
+.org-card:hover { background: var(--gold-muted); }
+.org-card.selected { border-color: var(--gold); background: var(--gold-muted); box-shadow: 0 0 0 2px var(--gold-light); }
+.org-card .org-name { font-family: 'Playfair Display', serif; font-size: 13px; font-weight: 500; color: var(--ink); }
+.org-card .org-type { font-size: 10px; color: var(--ink-muted); margin-top: 3px; text-transform: uppercase; letter-spacing: 0.06em; }
+
+/* EXPORT */
+.preview-box {
+  background: var(--ink);
+  color: var(--gold-light);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem;
+  font-size: 12px;
+  font-family: 'DM Mono', monospace;
+  white-space: pre-wrap;
+  line-height: 1.7;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+/* OUTREACH */
+.outreach-card {
+  background: var(--warm-white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem;
+  margin-bottom: 10px;
+  box-shadow: var(--shadow);
+}
+.outreach-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
+.avatar {
+  width: 38px; height: 38px; border-radius: 50%;
+  background: var(--gold-muted);
+  border: 1px solid var(--gold);
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Playfair Display', serif;
+  font-size: 13px; font-weight: 500; color: var(--ink);
+  flex-shrink: 0;
+}
+.writer-label { font-size: 14px; font-weight: 500; color: var(--ink); }
+.writer-sublabel { font-size: 11px; color: var(--ink-muted); margin-top: 2px; }
+.status-indicator { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--ink-muted); }
+.dot { width: 8px; height: 8px; border-radius: 50%; }
+.dot-green { background: #4A8A3A; }
+.dot-amber { background: #C9901A; }
+.dot-gray { background: var(--ink-muted); }
+.contact-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+.method-pills { display: flex; gap: 6px; margin-bottom: 12px; flex-wrap: wrap; }
+.mpill {
+  padding: 5px 14px; border-radius: 99px;
+  border: 1px solid var(--border-strong);
+  background: transparent; cursor: pointer;
+  font-size: 12px; color: var(--ink-muted);
+  font-family: 'DM Sans', sans-serif;
+  transition: all 0.15s;
+}
+.mpill:hover { background: var(--cream); }
+.mpill.active { background: var(--ink); color: var(--gold); border-color: var(--ink); }
+.msg-preview {
+  background: var(--cream);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px 14px;
+  font-size: 12px;
+  color: var(--ink-light);
+  line-height: 1.6;
+  white-space: pre-wrap;
+  margin-bottom: 10px;
+  font-family: 'DM Mono', monospace;
+}
+.link-box {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--cream); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 8px 12px; margin-bottom: 12px;
+}
+.link-box span { font-size: 11px; font-family: 'DM Mono', monospace; color: var(--ink-muted); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.form-url-banner {
+  background: var(--gold-muted);
+  border: 1px solid var(--gold);
+  border-radius: var(--radius-lg);
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.5rem;
+  display: flex; align-items: center; gap: 12px;
+}
+.form-url-banner input {
+  flex: 1; padding: 7px 10px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  background: #fff; font-size: 13px;
+  font-family: 'DM Mono', monospace;
+  color: var(--ink);
+}
+.form-url-banner input:focus { outline: none; border-color: var(--gold); }
+.form-url-label { font-size: 12px; font-weight: 500; color: var(--ink); white-space: nowrap; }
+.divider { border: none; border-top: 1px solid var(--border); margin: 1.25rem 0; }
+.full-width { grid-column: 1 / -1; }
+select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%238A837D'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; padding-right: 28px !important; }
+
+@media (max-width: 768px) {
+  /* Header */
+  .header { padding: 0 1rem; }
+  .header-right { display: none; }
+  .logo span { display: none; }
+  .logo { font-size: 16px; }
+
+  /* Nav — horizontal scroll, bigger tap targets */
+  .nav { padding: 0 0.5rem; gap: 0; -webkit-overflow-scrolling: touch; }
+  .nav-tab { padding: 12px 14px; font-size: 12px; }
+
+  /* Main padding */
+  .main { padding: 1rem; }
+
+  /* Page headers */
+  .page-header { flex-wrap: wrap; gap: 10px; margin-bottom: 1rem; }
+  .page-title { font-size: 18px; }
+  .page-header .btn, .page-header .btn.gold { width: 100%; text-align: center; }
+
+  /* Cards */
+  .card { padding: 1rem; }
+  .card-title { font-size: 11px; margin-bottom: 1rem; }
+
+  /* Field grids — single column on mobile */
+  .field-grid { grid-template-columns: 1fr; gap: 10px; }
+  .field.full-width { grid-column: 1; }
+
+  /* Writer/publisher rows — stack vertically */
+  .writer-row {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    padding: 12px;
+    background: var(--cream);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    margin-bottom: 10px;
+    padding-bottom: 12px;
+  }
+  .writer-row .field label { font-size: 10px; }
+  .writer-row .field:first-child { grid-column: 1 / -1; } /* Name spans full width */
+  .remove-btn { grid-column: 1 / -1; width: 100%; text-align: center; padding: 8px; border: 1px solid var(--border); border-radius: var(--radius); }
+
+  /* Buttons */
+  .btn-row { gap: 8px; }
+  .btn-row .btn, .btn-row a { width: 100%; text-align: center; }
+  .btn-row a .btn { width: 100%; }
+  .add-btn { padding: 12px; font-size: 13px; }
+
+  /* Org grid — 2 columns on mobile */
+  .org-grid { grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 1rem; }
+  .org-card { padding: 0.75rem 0.5rem; }
+  .org-card .org-name { font-size: 12px; }
+  .org-card .org-type { font-size: 9px; }
+
+  /* Song rows in vault */
+  .song-row { flex-direction: column; align-items: flex-start; gap: 8px; padding: 12px; }
+  .badges { width: 100%; }
+
+  /* Outreach cards */
+  .outreach-card { padding: 1rem; }
+  .outreach-header { flex-wrap: wrap; gap: 8px; }
+  .contact-grid { grid-template-columns: 1fr; }
+  .method-pills { gap: 6px; }
+  .mpill { flex: 1; text-align: center; padding: 8px 6px; font-size: 11px; }
+
+  /* Form URL banner */
+  .form-url-banner { flex-direction: column; align-items: stretch; gap: 8px; }
+  .form-url-banner input { min-width: unset; width: 100%; }
+  .form-url-label { white-space: normal; }
+
+  /* Preview box */
+  .preview-box { font-size: 11px; max-height: 200px; }
+
+  /* Settings my info grid */
+  #settings .field-grid { grid-template-columns: 1fr; }
+
+  /* Sync status */
+  #syncStatus { font-size: 12px; }
+
+  /* Link box */
+  .link-box { flex-wrap: wrap; }
+  .link-box span { width: 100%; }
+
+  /* Export/submit btn row — stack portals */
+  #submit .btn-row { flex-direction: column; }
+
+  /* Pct total */
+  .pct-total { font-size: 11px; }
+}
+
+@media (max-width: 400px) {
+  .org-grid { grid-template-columns: 1fr; }
+  .nav-tab { padding: 10px 10px; font-size: 11px; }
+  .writer-row { grid-template-columns: 1fr; }
+  .writer-row .field:first-child { grid-column: 1; }
+}
+
+.copy-field {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.copy-field input, .copy-field select {
+  flex: 1;
+  min-width: 0;
+}
+.copy-btn {
+  flex-shrink: 0;
+  padding: 0 7px;
+  height: 34px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  background: var(--cream);
+  color: var(--ink-muted);
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  transition: all 0.15s;
+}
+.copy-btn:hover { background: var(--gold-muted); border-color: var(--gold); color: var(--ink); }
+.copy-btn.copied { background: #EAF3E4; border-color: #C2DDB8; color: var(--sage); }
+
+.toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: var(--ink);
+  color: var(--gold-light);
+  padding: 12px 20px;
+  border-radius: var(--radius-lg);
+  font-size: 13px;
+  font-family: 'DM Sans', sans-serif;
+  box-shadow: var(--shadow-lg);
+  z-index: 999;
+  opacity: 0;
+  transition: all 0.25s ease;
+  max-width: 90vw;
+  text-align: center;
+  pointer-events: none;
+}
+.toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+.toast.error {
+  background: var(--rust);
+  color: #fff;
+}
+</style>
+</head>
+<body>
+
+<div id="passwordOverlay" style="position:fixed;top:0;left:0;right:0;bottom:0;background:#1A1612;z-index:9999;display:flex;align-items:center;justify-content:center;">
+  <div style="text-align:center;padding:2rem;">
+    <div style="font-family:'Playfair Display',serif;font-size:24px;color:#C9A84C;margin-bottom:8px;">Songwriter Royalty Hub</div>
+    <div style="font-size:13px;color:rgba(245,240,232,0.4);margin-bottom:2rem;font-family:'DM Sans',sans-serif;">by Mason Douglas</div>
+    <input type="password" id="pwInput" placeholder="Enter password" onkeydown="if(event.key==='Enter')checkPassword()"
+      style="width:240px;padding:10px 14px;border-radius:4px;border:1px solid rgba(201,168,76,0.4);background:rgba(245,240,232,0.08);color:#F5F0E8;font-size:14px;font-family:'DM Sans',sans-serif;text-align:center;outline:none;display:block;margin:0 auto 12px;">
+    <button onclick="checkPassword()"
+      style="padding:10px 28px;background:#C9A84C;color:#1A1612;border:none;border-radius:4px;font-size:14px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;">
+      Enter
+    </button>
+    <div id="pwError" style="color:#B85C3A;font-size:12px;margin-top:10px;font-family:'DM Sans',sans-serif;display:none;">Incorrect password</div>
+  </div>
+</div>
+
+<script>
+function checkPassword() {
+  const input = document.getElementById('pwInput').value;
+  if(input === 'SlayMe76') {
+    document.getElementById('passwordOverlay').style.display = 'none';
+    sessionStorage.setItem('srh_auth', '1');
+  } else {
+    document.getElementById('pwError').style.display = 'block';
+    document.getElementById('pwInput').value = '';
+    document.getElementById('pwInput').focus();
+  }
+}
+// Auto-unlock if already authenticated this session
+if(sessionStorage.getItem('srh_auth') === '1') {
+  document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('passwordOverlay').style.display = 'none';
+  });
+}
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('pwInput').focus();
+});
+</script>
+
+<header class="header">
+  <div class="logo">Songwriter Royalty Hub <span>by Mason Douglas</span></div>
+  <div class="header-right">nowyouknownashville.com</div>
+</header>
+
+<div class="toast" id="toast"></div>
+
+<nav class="nav">
+  <button class="nav-tab active" onclick="showTab('vault')">Song Vault</button>
+  <button class="nav-tab" onclick="showTab('entry')">New Song</button>
+  <button class="nav-tab" onclick="showTab('cowriters')">Co-writer Outreach</button>
+  <button class="nav-tab" onclick="showTab('submit')">Export & Submit</button>
+  <button class="nav-tab" onclick="showTab('settings')">⚙ Settings & Sync</button>
+</nav>
+
+<main class="main">
+
+  <!-- VAULT -->
+  <div id="vault" class="section active">
+    <div class="page-header">
+      <div>
+        <div class="page-title">Song Vault</div>
+        <div class="page-sub">Your registered catalog</div>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn" onclick="loadSongsFromSupabase()" title="Reload from database">↻ Reload</button>
+        <button class="btn gold" onclick="showTab('entry');clearForm()">+ New Song</button>
+      </div>
+    </div>
+    <div id="songsList"></div>
+    <div id="emptyVault" class="empty"><div class="empty-icon">♪</div>No songs yet. Add your first to get started.</div>
+  </div>
+
+  <!-- ENTRY -->
+  <div id="entry" class="section">
+    <div class="page-header">
+      <div><div class="page-title">Song Entry</div><div class="page-sub">Enter once — use everywhere</div></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Song Basics</div>
+      <div class="field-grid">
+        <div class="field full-width"><label>Song Title <span class="req">*</span></label><input type="text" id="songTitle" placeholder="e.g. Neon Nashville"></div>
+        <div class="field"><label>Alt Title</label><input type="text" id="altTitle" placeholder="Also known as..."></div>
+        <div class="field"><label>ISWC</label><input type="text" id="iswc" placeholder="T-000.000.000-0"></div>
+        <div class="field"><label>Duration</label><input type="text" id="duration" placeholder="3:42"></div>
+        <div class="field"><label>Genre</label><select id="genre"><option value="">Select...</option><option>Country</option><option>Country / Pop</option><option>Americana</option><option>Rock</option><option>Pop</option><option>R&B / Soul</option><option>Folk</option><option>Other</option></select></div>
+        <div class="field"><label>Language</label><input type="text" id="language" value="English"></div>
+        <div class="field"><label>Release Date</label><input type="date" id="releaseDate"></div>
+        <div class="field"><label>ISRC</label><input type="text" id="isrc" placeholder="USRC11234567"></div>
+        <div class="field"><label>UPC</label><input type="text" id="upc" placeholder="00000000000000"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Writers & Shares</div>
+      <div id="writersContainer"></div>
+      <button class="add-btn" onclick="addWriter()">+ Add Writer</button>
+      <div class="pct-total" id="pctTotal"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Publishers</div>
+      <div id="publishersContainer"></div>
+      <button class="add-btn" onclick="addPublisher()">+ Add Publisher</button>
+      <div class="pct-total" id="pubPctTotal"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Recording Details</div>
+      <div class="field-grid">
+        <div class="field"><label>Artist</label><input type="text" id="artist" placeholder="Performing artist"></div>
+        <div class="field"><label>Album</label><input type="text" id="album" placeholder="Album name"></div>
+        <div class="field"><label>Label</label><input type="text" id="label" placeholder="Record label"></div>
+        <div class="field"><label>Distributor</label><input type="text" id="distributor" placeholder="e.g. DistroKid"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Sync Metadata</div>
+      <div class="field-grid">
+        <div class="field"><label>BPM</label><input type="number" id="bpm" placeholder="120"></div>
+        <div class="field"><label>Key</label><input type="text" id="key" placeholder="G major"></div>
+        <div class="field"><label>Instrumentation</label><input type="text" id="instrumentation" placeholder="acoustic, strings..."></div>
+        <div class="field"><label>Mood Tags</label><input type="text" id="mood" placeholder="upbeat, nostalgic..."></div>
+        <div class="field full-width"><label>Lyric</label><textarea id="lyrics" placeholder="First line or hook"></textarea></div>
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn gold" onclick="saveSong()">Save to Vault</button>
+      <button class="btn" onclick="showTab('cowriters')">Invite Co-writers →</button>
+      <button class="btn" onclick="emailSongInfo()">✉ Email song info</button>
+      <button class="btn" onclick="showTab('submit')">Preview Export →</button>
+      <button class="btn" style="color:var(--rust);border-color:var(--rust);" onclick="deleteSong()">🗑 Delete song</button>
+    </div>
+  </div>
+
+  <!-- CO-WRITERS -->
+  <div id="cowriters" class="section">
+    <div class="page-header">
+      <div><div class="page-title">Co-writer Outreach</div><div class="page-sub">Send a link — they fill in their own info</div></div>
+    </div>
+
+    <div class="form-url-banner">
+      <div class="form-url-label">Your Google Form URL:</div>
+      <input type="text" id="formUrl" placeholder="Paste your Google Form link here..." oninput="saveFormUrl()">
+      <button class="btn" style="flex-shrink:0;" onclick="document.getElementById('formUrl').value='';saveFormUrl()">Clear</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Select Song</div>
+      <select id="outreachSongPicker" style="width:100%;padding:9px 12px;border:1px solid var(--border-strong);border-radius:var(--radius);background:var(--cream);color:var(--ink);font-size:13px;font-family:'DM Sans',sans-serif;" onchange="renderOutreach()">
+        <option value="">Choose a song...</option>
+      </select>
+    </div>
+
+    <div id="outreachContent" style="display:none;">
+      <div id="writerOutreachCards"></div>
+      <div class="card" style="margin-top:0.5rem;">
+        <div class="card-title">General Shareable Link</div>
+        <div class="link-box">
+          <span id="globalLink">—</span>
+          <button class="btn" style="flex-shrink:0;padding:6px 12px;font-size:12px;" onclick="copyText(document.getElementById('globalLink').textContent,this)">Copy</button>
+        </div>
+        <p class="hint">Share this link via text, email, DM, or any channel. Co-writers fill out their own info and it goes straight to your Google Sheet.</p>
+      </div>
+    </div>
+    <div id="outreachEmpty" class="empty"><div class="empty-icon">✉</div>Select a song above to manage outreach.</div>
+  </div>
+
+  <!-- EXPORT -->
+  <div id="submit" class="section">
+    <div class="page-header">
+      <div><div class="page-title">Export & Submit</div><div class="page-sub">Formatted for each organization</div></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Select Song</div>
+      <select id="exportSongPicker" style="width:100%;padding:9px 12px;border:1px solid var(--border-strong);border-radius:var(--radius);background:var(--cream);color:var(--ink);font-size:13px;font-family:'DM Sans',sans-serif;" onchange="refreshPreview()">
+        <option value="">Choose a song...</option>
+      </select>
+    </div>
+
+    <div class="card">
+      <div class="card-title">The MLC Bulk Registration Export</div>
+      <p style="font-size:13px;color:var(--ink-light);line-height:1.6;margin-bottom:1rem;">Exports a .xlsx file pre-formatted to match The MLC's official bulk upload template (MLCBulkWork_V1_2).</p>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        <button class="btn gold" onclick="exportMLC('unsubmitted')">⬇ Export unsubmitted songs (MLC)</button>
+        <button class="btn" onclick="exportMLC()">⬇ Export all songs (MLC)</button>
+      </div>
+      <p class="hint" style="margin-top:8px;">Upload at <a href="https://portal.themlc.com" target="_blank" style="color:var(--gold);">portal.themlc.com</a> → Works → Bulk Upload. Mark songs as submitted in the Song Vault after uploading.</p>
+    </div>
+
+    <div class="card">
+      <div class="card-title">SESAC Bulk Registration Export</div>
+      <p style="font-size:13px;color:var(--ink-light);line-height:1.6;margin-bottom:1rem;">Exports a .xlsx file pre-formatted to match SESAC's official bulk upload template. Each writer on a song gets their own row.</p>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        <button class="btn gold" onclick="exportSESAC('unsubmitted')">⬇ Export unsubmitted songs (SESAC)</button>
+        <button class="btn" onclick="exportSESAC()">⬇ Export all songs (SESAC)</button>
+        <button class="btn" onclick="exportSESACSelected()" id="sesacSelectedBtn" style="display:none;">⬇ Export selected song (SESAC)</button>
+      </div>
+      <p class="hint" style="margin-top:8px;">Upload the downloaded file at <a href="https://www.sesac.com" target="_blank" style="color:var(--gold);">sesac.com</a> → My Account → Song Registration → Bulk Upload. Mark songs as submitted in the Song Vault after uploading.</p>
+    </div>
+
+    <div class="card">
+      <div class="card-title">MusicMark Bulk Registration Export (BMI / ASCAP / SOCAN)</div>
+      <p style="font-size:13px;color:var(--ink-light);line-height:1.6;margin-bottom:1rem;">Exports a .xlsx file formatted for MusicMark's bulk upload, accepted by BMI, ASCAP, and SOCAN.</p>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        <button class="btn gold" onclick="exportMusicMark('unsubmitted')">⬇ Export unsubmitted songs (MusicMark)</button>
+        <button class="btn" onclick="exportMusicMark()">⬇ Export all songs (MusicMark)</button>
+      </div>
+      <p class="hint" style="margin-top:8px;">Upload at <a href="https://www.musicmark.com" target="_blank" style="color:var(--gold);">musicmark.com</a>. Works for BMI, ASCAP, and SOCAN registrations.</p>
+    </div>
+
+    <hr class="divider">
+    <div class="card-title" style="padding:0 0 0.75rem;">Manual Export — Copy & Paste</div>
+    <div class="org-grid">
+      <div class="org-card selected" onclick="toggleOrg(this,'mlc')"><div class="org-name">The MLC</div><div class="org-type">Mechanical</div></div>
+      <div class="org-card selected" onclick="toggleOrg(this,'sesac')"><div class="org-name">SESAC</div><div class="org-type">PRO</div></div>
+      <div class="org-card" onclick="toggleOrg(this,'ascap')"><div class="org-name">ASCAP</div><div class="org-type">PRO</div></div>
+      <div class="org-card" onclick="toggleOrg(this,'bmi')"><div class="org-name">BMI</div><div class="org-type">PRO</div></div>
+      <div class="org-card" onclick="toggleOrg(this,'soundexchange')"><div class="org-name">SoundExchange</div><div class="org-type">Digital</div></div>
+      <div class="org-card" onclick="toggleOrg(this,'musicreports')"><div class="org-name">Music Reports</div><div class="org-type">Licensing</div></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Formatted Export</div>
+      <div class="preview-box" id="previewBox">Select a song to see formatted output...</div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn gold" onclick="copyExport()">Copy Export Text</button>
+      <button class="btn primary" onclick="window.open('https://portal.themlc.com/member/11959668/create-work/bulk','_blank')">Open MLC ↗</button>
+      <button class="btn" onclick="window.open('https://affiliates.sesac.com/song/catalog','_blank')">Open SESAC ↗</button>
+      <button class="btn" onclick="window.open('https://www.ascap.com/help/registration','_blank')">Open ASCAP ↗</button>
+      <button class="btn" onclick="window.open('https://repertoire.bmi.com','_blank')">Open BMI ↗</button>
+    </div>
+    <p class="hint" style="margin-top:10px;">Portals open in a new tab — paste the export text into the work registration form.</p>
+  </div>
+
+  <!-- SETTINGS & SYNC -->
+  <div id="settings" class="section">
+    <div class="page-header">
+      <div><div class="page-title">Settings & Sync</div><div class="page-sub">Connect your Google Sheet to pull co-writer responses</div></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">☁ Supabase Database</div>
+      <p style="font-size:13px;color:var(--ink-light);line-height:1.6;margin-bottom:1rem;">Your songs are stored permanently in Supabase — no more cache worries. Data loads automatically on startup and saves on every song entry.</p>
+      <div class="btn-row" style="margin-top:0;">
+        <button class="btn gold" onclick="loadSongsFromSupabase()">↻ Reload from database</button>
+        <button class="btn" onclick="migratLocalToSupabase()">⬆ Migrate local cache to database</button>
+      </div>
+      <div id="supaStatus" class="hint" style="margin-top:8px;">Connected to ydxriywpkkdptwcuqaaj.supabase.co</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">My Default Info</div>
+      <p style="font-size:13px;color:var(--ink-light);line-height:1.6;margin-bottom:1rem;">Saved once — auto-fills every new song entry so you never retype your own details.</p>
+      <div class="field-grid">
+        <div class="field"><label>Your legal name</label><input type="text" id="my_name" placeholder="Mason Douglas" oninput="saveMyInfo()"></div>
+        <div class="field"><label>IPI / CAE number</label><input type="text" id="my_ipi" placeholder="Your IPI #" oninput="saveMyInfo()"></div>
+        <div class="field"><label>Your PRO</label><select id="my_pro" onchange="saveMyInfo()"><option value="">Select...</option><option>SESAC</option><option>ASCAP</option><option>BMI</option><option>GMR</option><option>None</option></select></div>
+        <div class="field"><label>Default share %</label><input type="number" id="my_pct" placeholder="e.g. 50" min="0" max="100" oninput="saveMyInfo()"></div>
+        <div class="field"><label>Publisher name</label><input type="text" id="my_pub_name" placeholder="Your publisher" oninput="saveMyInfo()"></div>
+        <div class="field"><label>Publisher IPI</label><input type="text" id="my_pub_ipi" placeholder="Publisher IPI #" oninput="saveMyInfo()"></div>
+        <div class="field"><label>Publisher PRO</label><select id="my_pub_pro" onchange="saveMyInfo()"><option value="">Select...</option><option>SESAC</option><option>ASCAP</option><option>BMI</option><option>None</option></select></div>
+        <div class="field"><label>Default genre</label><select id="my_genre" onchange="saveMyInfo()"><option value="">Select...</option><option>Country</option><option>Country / Pop</option><option>Americana</option><option>Rock</option><option>Pop</option><option>R&B / Soul</option><option>Folk</option><option>Other</option></select></div>
+        <div class="field"><label>Default language</label><input type="text" id="my_language" placeholder="English" oninput="saveMyInfo()"></div>
+        <div class="field"><label>Default distributor</label><input type="text" id="my_distributor" placeholder="e.g. DistroKid" oninput="saveMyInfo()"></div>
+        <div class="field"><label>Default label</label><input type="text" id="my_label" placeholder="Your label" oninput="saveMyInfo()"></div>
+        <div class="field"><label>Default artist name</label><input type="text" id="my_artist" placeholder="Mason Douglas" oninput="saveMyInfo()"></div>
+        <div class="field"><label>SESAC Account #</label><input type="text" id="my_sesac_account" placeholder="958353" oninput="saveMyInfo()"></div>
+      </div>
+      <div class="btn-row" style="margin-top:1rem;">
+        <button class="btn gold" onclick="saveAllSettings();showSavedInfo()">Save my info</button>
+        <div id="myInfoSaved" style="display:none;font-size:12px;color:var(--sage);align-self:center;">✓ Saved — will auto-fill on next new song</div>
+      </div>
+    </div>
+
+    <div class="card">
+    <div class="card">
+      <div class="card-title">Vault Backup — Export & Import</div>
+      <p style="font-size:13px;color:var(--ink-light);line-height:1.6;margin-bottom:1rem;">Download a full backup of your vault as a JSON file, or restore from a previous backup.</p>
+      <div class="btn-row" style="margin-top:0;">
+        <button class="btn gold" onclick="exportVault()">⬇ Export vault backup</button>
+        <button class="btn" onclick="importVault()">⬆ Import from backup</button>
+      </div>
+      <p class="hint" style="margin-top:10px;">Export saves a <code>.json</code> file to your Downloads. Import merges it back in — your local data always wins in conflicts.</p>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Google Sheets Connection</div>
+      <div class="field-grid">
+        <div class="field full-width">
+          <label>Google Sheet ID</label>
+          <input type="text" id="sheetId" placeholder="e.g. 18wjPuoozuLmy0Z4BfMqk2HKkhqj87zgfr6XTSKOiqyo" oninput="saveSettings()">
+          <span class="hint">Found in your Sheet's URL: docs.google.com/spreadsheets/d/<strong>[THIS PART]</strong>/edit</span>
+        </div>
+        <div class="field full-width">
+          <label>Google Sheets API Key</label>
+          <input type="password" id="apiKey" placeholder="Paste your API key here" oninput="saveSettings()">
+          <span class="hint">Free from Google Cloud Console — see setup instructions below.</span>
+        </div>
+        <div class="field">
+          <label>Sheet Tab Name</label>
+          <input type="text" id="sheetTab" placeholder="Form Responses 1" oninput="saveSettings()">
+          <span class="hint">The tab name in your spreadsheet (default: "Form Responses 1")</span>
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn gold" onclick="syncFromSheet()">⟳ Sync from Sheet now</button>
+        <button class="btn" onclick="testConnection()">Test connection</button>
+      </div>
+      <div id="syncStatus" style="margin-top:12px;font-size:13px;display:none;padding:10px 14px;border-radius:var(--radius);"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Column Mapping</div>
+      <p style="font-size:13px;color:var(--ink-light);margin-bottom:1rem;line-height:1.6;">Tell the hub which column in your sheet contains each piece of data. Use the column letter (A, B, C...) or header name exactly as it appears in your sheet.</p>
+      <div class="field-grid">
+        <div class="field"><label>Song Title column</label><input type="text" id="col_song" placeholder="Song Title" oninput="saveSettings()"></div>
+        <div class="field"><label>Writer Name column</label><input type="text" id="col_name" placeholder="Your legal name" oninput="saveSettings()"></div>
+        <div class="field"><label>IPI / CAE column</label><input type="text" id="col_ipi" placeholder="IPI / CAE number" oninput="saveSettings()"></div>
+        <div class="field"><label>PRO column</label><input type="text" id="col_pro" placeholder="Your PRO" oninput="saveSettings()"></div>
+        <div class="field"><label>Share % column</label><input type="text" id="col_pct" placeholder="Agreed share %" oninput="saveSettings()"></div>
+        <div class="field"><label>Publisher Name column</label><input type="text" id="col_pub" placeholder="Publisher name" oninput="saveSettings()"></div>
+        <div class="field"><label>Publisher IPI column</label><input type="text" id="col_pub_ipi" placeholder="Publisher IPI" oninput="saveSettings()"></div>
+        <div class="field"><label>Publisher PRO column</label><input type="text" id="col_pub_pro" placeholder="Publisher PRO" oninput="saveSettings()"></div>
+        <div class="field"><label>Publisher Share % column</label><input type="text" id="col_pub_pct" placeholder="Publisher Share %" oninput="saveSettings()"></div>
+        <div class="field"><label>Email column</label><input type="text" id="col_email" placeholder="Your email" oninput="saveSettings()"></div>
+        <div class="field"><label>Phone column</label><input type="text" id="col_phone" placeholder="Your phone" oninput="saveSettings()"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">How to get a free API Key (5 min)</div>
+      <ol style="font-size:13px;color:var(--ink-light);line-height:2;padding-left:1.25rem;">
+        <li>Go to <a href="https://console.cloud.google.com" target="_blank" style="color:var(--gold);">console.cloud.google.com</a> and sign in with your Google account</li>
+        <li>Click <strong>Select a project</strong> → <strong>New Project</strong> → name it anything (e.g. "Songwriter Hub") → Create</li>
+        <li>In the search bar type <strong>Google Sheets API</strong> → click it → click <strong>Enable</strong></li>
+        <li>Go to <strong>APIs & Services → Credentials → + Create Credentials → API Key</strong></li>
+        <li>Copy the key and paste it above. That's it — it's free and never expires.</li>
+        <li><strong>Important:</strong> Make sure your Google Sheet is set to <em>"Anyone with the link can view"</em> (Share → change access)</li>
+      </ol>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Sync Log</div>
+      <div id="syncLog" style="background:var(--ink);color:var(--gold-light);border-radius:var(--radius-lg);padding:1rem;font-size:12px;font-family:'DM Mono',monospace;line-height:1.8;min-height:80px;max-height:200px;overflow-y:auto;">No syncs run yet.</div>
+    </div>
+  </div>
+</main>
+
+<script>
+// ── SUPABASE CONFIG ─────────────────────────────────────────────────
+const SUPA_URL = 'https://ydxriywpkkdptwcuqaaj.supabase.co/rest/v1';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlkeHJpeXdwa2tkcHR3Y3VxYWFqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1Njc5NjYsImV4cCI6MjA5NDE0Mzk2Nn0.SYACMatBKKEZV0Wo3rJ6iPSzt0E14qXjT2DieUsG9Zk';
+const SUPA_HEADERS = {
+  'apikey': SUPA_KEY,
+  'Authorization': `Bearer ${SUPA_KEY}`,
+  'Content-Type': 'application/json',
+  'Prefer': 'return=representation'
+};
+
+async function supaFetch(path, options={}) {
+  const res = await fetch(`${SUPA_URL}${path}`, { ...options, headers: { ...SUPA_HEADERS, ...(options.headers||{}) } });
+  if(!res.ok) { const err = await res.text(); throw new Error(err); }
+  const text = await res.text();
+  return text ? JSON.parse(text) : [];
+}
+
+// Convert Supabase row → local song object
+function rowToSong(row) {
+  return {
+    _id: row.id,
+    title: row.title || '',
+    altTitle: row.alt_title || '',
+    iswc: row.iswc || '',
+    duration: row.duration || '',
+    genre: row.genre || '',
+    language: row.language || 'English',
+    releaseDate: row.release_date || '',
+    isrc: row.isrc || '',
+    upc: row.upc || '',
+    artist: row.artist || '',
+    album: row.album || '',
+    label: row.label || '',
+    distributor: row.distributor || '',
+    lyrics: row.lyrics || '',
+    bpm: row.bpm || '',
+    key: row.key || '',
+    instrumentation: row.instrumentation || '',
+    mood: row.mood || '',
+    writers: row.writers || [],
+    publishers: row.publishers || [],
+    outreach: row.outreach || {},
+    registrations: row.registrations || {},
+  };
+}
+
+// Convert local song object → Supabase row
+function songToSupaRow(song) {
+  return {
+    title: song.title || '',
+    alt_title: song.altTitle || '',
+    iswc: song.iswc || '',
+    duration: song.duration || '',
+    genre: song.genre || '',
+    language: song.language || 'English',
+    release_date: song.releaseDate || '',
+    isrc: song.isrc || '',
+    upc: song.upc || '',
+    artist: song.artist || '',
+    album: song.album || '',
+    label: song.label || '',
+    distributor: song.distributor || '',
+    lyrics: song.lyrics || '',
+    bpm: song.bpm || '',
+    key: song.key || '',
+    instrumentation: song.instrumentation || '',
+    mood: song.mood || '',
+    writers: song.writers || [],
+    publishers: song.publishers || [],
+    outreach: song.outreach || {},
+    registrations: song.registrations || {},
+    updated_at: new Date().toISOString(),
+  };
+}
+
+async function loadSongsFromSupabase(silent=false) {
+  try {
+    if(!silent) showToast('Loading songs...', 'info');
+    const rows = await supaFetch('/songs?order=updated_at.desc');
+    songs = rows.map(rowToSong);
+    localStorage.setItem('srh_songs', JSON.stringify(songs));
+
+    // Only re-render vault if we're on the vault tab
+    // On other tabs, just update the data silently
+    const vaultActive = document.getElementById('vault').classList.contains('active');
+    if(vaultActive || !silent) renderVault();
+
+    // If on cowriters tab, only re-render if explicitly requested (not silent auto-refresh)
+    const cowritersActive = document.getElementById('cowriters').classList.contains('active');
+    if(cowritersActive && !silent) {
+      const idx = document.getElementById('outreachSongPicker').value;
+      if(idx !== '') renderOutreach();
+    }
+
+    if(!silent) showToast(`✓ Loaded ${songs.length} songs from database`);
+  } catch(e) {
+    console.warn('Supabase load failed, falling back to local:', e.message);
+    songs = JSON.parse(localStorage.getItem('srh_songs') || '[]');
+    if(!silent) renderVault();
+    if(!silent) showToast('Using local cache — check internet connection', 'error');
+  }
+}
+
+async function migratLocalToSupabase() {
+  const local = JSON.parse(localStorage.getItem('srh_songs') || '[]');
+  if(!local.length) { showToast('No local songs to migrate', 'error'); return; }
+  showToast(`Migrating ${local.length} songs...`, 'info');
+  let success = 0;
+  for(const song of local) {
+    if(!song._id) {
+      const result = await saveSongToSupabase(song);
+      if(result) success++;
+    }
+  }
+  await loadSongsFromSupabase();
+  showToast(`✓ Migrated ${success} songs to Supabase`);
+}
+
+async function saveOutreachToSupabase(songIdx) {
+  if(songs[songIdx]?._id) {
+    await saveSongToSupabase(songs[songIdx]);
+  }
+}
+
+
+async function saveSongToSupabase(song) {
+  try {
+    const row = songToSupaRow(song);
+    if(song._id) {
+      // Update existing
+      await supaFetch(`/songs?id=eq.${song._id}`, {
+        method: 'PATCH',
+        body: JSON.stringify(row)
+      });
+    } else {
+      // Insert new
+      const result = await supaFetch('/songs', {
+        method: 'POST',
+        body: JSON.stringify(row)
+      });
+      if(result && result[0]) song._id = result[0].id;
+    }
+    // Keep local cache in sync
+    localStorage.setItem('srh_songs', JSON.stringify(songs));
+    return true;
+  } catch(e) {
+    console.warn('Supabase save failed:', e.message);
+    showToast('Save to database failed — saved locally only', 'error');
+    return false;
+  }
+}
+
+async function deleteSongFromSupabase(songId) {
+  try {
+    await supaFetch(`/songs?id=eq.${songId}`, { method: 'DELETE' });
+    return true;
+  } catch(e) {
+    console.warn('Supabase delete failed:', e.message);
+    return false;
+  }
+}
+
+let songs = JSON.parse(localStorage.getItem('srh_songs') || '[]');
+let selectedOrgs = new Set(['mlc','sesac']);
+let editingIndex = -1;
+let outreachModes = {};
+
+// ── SETTINGS — SUPABASE BACKED ──────────────────────────────────────
+
+function getAllSettingsFromForm() {
+  return {
+    form_url:     document.getElementById('formUrl')?.value || '',
+    sheet_id:     document.getElementById('sheetId')?.value || '',
+    api_key:      document.getElementById('apiKey')?.value || '',
+    sheet_tab:    document.getElementById('sheetTab')?.value || 'Form Responses 1',
+    col_song:     document.getElementById('col_song')?.value || 'Song Title',
+    col_name:     document.getElementById('col_name')?.value || 'Your legal name',
+    col_ipi:      document.getElementById('col_ipi')?.value || 'IPI / CAE number',
+    col_pro:      document.getElementById('col_pro')?.value || 'Your PRO',
+    col_pct:      document.getElementById('col_pct')?.value || 'Agreed share %',
+    col_pub:      document.getElementById('col_pub')?.value || 'Publisher name',
+    col_pub_ipi:  document.getElementById('col_pub_ipi')?.value || 'Publisher IPI',
+    col_pub_pro:  document.getElementById('col_pub_pro')?.value || 'Publisher PRO',
+    col_pub_pct:  document.getElementById('col_pub_pct')?.value || 'Publisher Share %',
+    col_email:    document.getElementById('col_email')?.value || 'Your email',
+    col_phone:    document.getElementById('col_phone')?.value || 'Your phone',
+    my_name:      document.getElementById('my_name')?.value || '',
+    my_ipi:       document.getElementById('my_ipi')?.value || '',
+    my_pro:       document.getElementById('my_pro')?.value || '',
+    my_pct:       document.getElementById('my_pct')?.value || '',
+    my_pub_name:  document.getElementById('my_pub_name')?.value || '',
+    my_pub_ipi:   document.getElementById('my_pub_ipi')?.value || '',
+    my_pub_pro:   document.getElementById('my_pub_pro')?.value || '',
+    my_genre:     document.getElementById('my_genre')?.value || '',
+    my_language:  document.getElementById('my_language')?.value || 'English',
+    my_distributor: document.getElementById('my_distributor')?.value || '',
+    my_label:     document.getElementById('my_label')?.value || '',
+    my_artist:    document.getElementById('my_artist')?.value || '',
+    my_sesac_account: document.getElementById('my_sesac_account')?.value || '958353',
+    updated_at:   new Date().toISOString(),
+  };
+}
+
+async function saveAllSettings() {
+  const s = getAllSettingsFromForm();
+  localStorage.setItem('srh_settings', JSON.stringify(s));
+  localStorage.setItem('srh_myinfo', JSON.stringify({
+    name: s.my_name, ipi: s.my_ipi, pro: s.my_pro, pct: s.my_pct,
+    pub_name: s.my_pub_name, pub_ipi: s.my_pub_ipi, pub_pro: s.my_pub_pro,
+    genre: s.my_genre, language: s.my_language, distributor: s.my_distributor,
+    label: s.my_label, artist: s.my_artist, sesac_account: s.my_sesac_account,
+  }));
+  localStorage.setItem('srh_formUrl', s.form_url);
+  try {
+    await supaFetch('/settings?id=eq.main', {
+      method: 'PATCH',
+      headers: { 'Prefer': 'return=minimal' },
+      body: JSON.stringify(s)
+    });
+  } catch(e) {
+    console.warn('Settings save to Supabase failed:', e.message);
+  }
+}
+
+async function loadAllSettings() {
+  let s = {};
+  try {
+    const rows = await supaFetch('/settings?id=eq.main&limit=1');
+    if(rows && rows[0]) {
+      s = rows[0];
+      localStorage.setItem('srh_settings', JSON.stringify(s));
+      localStorage.setItem('srh_myinfo', JSON.stringify({
+        name: s.my_name, ipi: s.my_ipi, pro: s.my_pro, pct: s.my_pct,
+        pub_name: s.my_pub_name, pub_ipi: s.my_pub_ipi, pub_pro: s.my_pub_pro,
+        genre: s.my_genre, language: s.my_language, distributor: s.my_distributor,
+        label: s.my_label, artist: s.my_artist, sesac_account: s.my_sesac_account,
+      }));
+      localStorage.setItem('srh_formUrl', s.form_url || '');
+    }
+  } catch(e) {
+    console.warn('Settings load from Supabase failed, using local:', e.message);
+    s = JSON.parse(localStorage.getItem('srh_settings') || '{}');
+  }
+  applySettingsToForm(s);
+  return s;
+}
+
+function applySettingsToForm(s) {
+  const set = (id, val) => { const el = document.getElementById(id); if(el && val) el.value = val; };
+  set('formUrl',    s.form_url);
+  set('sheetId',    s.sheet_id);
+  set('apiKey',     s.api_key);
+  set('sheetTab',   s.sheet_tab   || 'Form Responses 1');
+  set('col_song',   s.col_song    || 'Song Title');
+  set('col_name',   s.col_name    || 'Your legal name');
+  set('col_ipi',    s.col_ipi     || 'IPI / CAE number');
+  set('col_pro',    s.col_pro     || 'Your PRO');
+  set('col_pct',    s.col_pct     || 'Agreed share %');
+  set('col_pub',    s.col_pub     || 'Publisher name');
+  set('col_pub_ipi',s.col_pub_ipi || 'Publisher IPI');
+  set('col_pub_pro',s.col_pub_pro || 'Publisher PRO');
+  set('col_pub_pct',s.col_pub_pct || 'Publisher Share %');
+  set('col_email',  s.col_email   || 'Your email');
+  set('col_phone',  s.col_phone   || 'Your phone');
+  set('my_name',    s.my_name);
+  set('my_ipi',     s.my_ipi);
+  set('my_pro',     s.my_pro);
+  set('my_pct',     s.my_pct);
+  set('my_pub_name',s.my_pub_name);
+  set('my_pub_ipi', s.my_pub_ipi);
+  set('my_pub_pro', s.my_pub_pro);
+  set('my_genre',   s.my_genre);
+  set('my_language',s.my_language || 'English');
+  set('my_distributor', s.my_distributor);
+  set('my_label',   s.my_label);
+  set('my_artist',  s.my_artist);
+  set('my_sesac_account', s.my_sesac_account || '958353');
+}
+
+// Keep old function names as aliases so existing code doesn't break
+function saveFormUrl() { saveAllSettings(); }
+function loadFormUrl() { return document.getElementById('formUrl')?.value || ''; }
+function getFormUrl() { return document.getElementById('formUrl')?.value?.trim() || 'https://your-google-form-link-here'; }
+function saveSettings() { saveAllSettings(); }
+function loadSettings() { loadAllSettings(); }
+function getSettings() { return JSON.parse(localStorage.getItem('srh_settings') || {}); }
+function saveMyInfo() { saveAllSettings(); }
+function loadMyInfo() { applySettingsToForm(JSON.parse(localStorage.getItem('srh_settings') || '{}')); }
+function getMyInfo() {
+  const s = JSON.parse(localStorage.getItem('srh_settings') || '{}');
+  return {
+    name: s.my_name || '', ipi: s.my_ipi || '', pro: s.my_pro || '', pct: s.my_pct || '',
+    pub_name: s.my_pub_name || '', pub_ipi: s.my_pub_ipi || '', pub_pro: s.my_pub_pro || '',
+    genre: s.my_genre || '', language: s.my_language || 'English',
+    distributor: s.my_distributor || '', label: s.my_label || '',
+    artist: s.my_artist || '', sesac_account: s.my_sesac_account || '958353',
+  };
+}
+function showSavedInfo() {
+  const el = document.getElementById('myInfoSaved');
+  el.style.display = 'block';
+  setTimeout(() => el.style.display = 'none', 3000);
+}
+
+function showTab(t) {
+  const tabs = ['vault','entry','cowriters','submit','settings'];
+  document.querySelectorAll('.nav-tab').forEach((el,i) => el.classList.toggle('active', tabs[i]===t));
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.getElementById(t).classList.add('active');
+  if(t==='vault') renderVault();
+  if(t==='submit'){populatePicker('exportSongPicker');refreshPreview();}
+  if(t==='cowriters'){loadFormUrl();populatePicker('outreachSongPicker');renderOutreach();}
+  if(t==='settings') loadAllSettings();
+}
+
+function addWriter(data) {
+  const c = document.getElementById('writersContainer');
+  const d = document.createElement('div');
+  d.className = 'writer-row';
+  d.innerHTML = `
+    <div class="field"><label>Writer Name</label><div class="copy-field"><input type="text" class="w-name" value="${data?.name||''}" placeholder="Full legal name" oninput="calcPct()"><button class="copy-btn" onclick="copyFieldValue(this)" title="Copy">⎘</button></div></div>
+    <div class="field"><label>IPI / CAE</label><div class="copy-field"><input type="text" class="w-ipi" value="${data?.ipi||''}" placeholder="IPI #"><button class="copy-btn" onclick="copyFieldValue(this)" title="Copy">⎘</button></div></div>
+    <div class="field"><label>PRO</label><div class="copy-field"><select class="w-pro"><option ${data?.pro==='SESAC'?'selected':''}>SESAC</option><option ${data?.pro==='ASCAP'?'selected':''}>ASCAP</option><option ${data?.pro==='BMI'?'selected':''}>BMI</option><option ${data?.pro==='GMR'?'selected':''}>GMR</option><option ${data?.pro==='None'?'selected':''}>None</option></select><button class="copy-btn" onclick="copyFieldValue(this)" title="Copy">⎘</button></div></div>
+    <div class="field"><label>Share %</label><div class="copy-field"><input type="number" class="w-pct" value="${data?.pct||''}" placeholder="50" min="0" max="100" oninput="calcPct()"><button class="copy-btn" onclick="copyFieldValue(this)" title="Copy">⎘</button></div></div>
+    <button class="remove-btn" onclick="this.parentElement.remove();calcPct()">✕</button>`;
+  c.appendChild(d);
+  calcPct();
+}
+
+function addPublisher(data) {
+  const c = document.getElementById('publishersContainer');
+  const d = document.createElement('div');
+  d.className = 'writer-row';
+  d.innerHTML = `
+    <div class="field"><label>Publisher</label><div class="copy-field"><input type="text" class="p-name" value="${data?.name||''}" placeholder="Publisher name"><button class="copy-btn" onclick="copyFieldValue(this)" title="Copy">⎘</button></div></div>
+    <div class="field"><label>IPI</label><div class="copy-field"><input type="text" class="p-ipi" value="${data?.ipi||''}" placeholder="IPI #"><button class="copy-btn" onclick="copyFieldValue(this)" title="Copy">⎘</button></div></div>
+    <div class="field"><label>PRO</label><div class="copy-field"><select class="p-pro"><option ${data?.pro==='SESAC'?'selected':''}>SESAC</option><option ${data?.pro==='ASCAP'?'selected':''}>ASCAP</option><option ${data?.pro==='BMI'?'selected':''}>BMI</option><option>None</option></select><button class="copy-btn" onclick="copyFieldValue(this)" title="Copy">⎘</button></div></div>
+    <div class="field"><label>Share %</label><div class="copy-field"><input type="number" class="p-pct" value="${data?.pct||''}" placeholder="50" min="0" max="100" oninput="calcPubPct()"><button class="copy-btn" onclick="copyFieldValue(this)" title="Copy">⎘</button></div></div>
+    <button class="remove-btn" onclick="this.parentElement.remove();calcPubPct()">✕</button>`;
+  c.appendChild(d);
+  calcPubPct();
+}
+
+function copyFieldValue(btn) {
+  const field = btn.previousElementSibling;
+  const val = field.value || field.options?.[field.selectedIndex]?.value || '';
+  if(!val) return;
+  navigator.clipboard.writeText(val).then(() => {
+    btn.textContent = '✓';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = '⎘'; btn.classList.remove('copied'); }, 1500);
+  });
+}
+
+function calcPct() {
+  const vals = [...document.querySelectorAll('.w-pct')].map(i=>parseFloat(i.value)||0);
+  const total = Math.round(vals.reduce((a,b)=>a+b,0)*100)/100;
+  const el = document.getElementById('pctTotal');
+  if(!vals.length){el.textContent='';return;}
+  const ok = Math.abs(total-100)<0.01;
+  el.textContent = `Writer shares: ${total}% (SESAC export: ${Math.round(total/2*100)/100}%) ${ok?'✓':'— must equal 100%'}`;
+  el.className = 'pct-total '+(ok?'pct-ok':'pct-err');
+}
+
+function calcPubPct() {
+  const vals = [...document.querySelectorAll('.p-pct')].map(i=>parseFloat(i.value)||0);
+  const total = Math.round(vals.reduce((a,b)=>a+b,0)*100)/100;
+  const el = document.getElementById('pubPctTotal');
+  if(!vals.length){el.textContent='';return;}
+  const ok = Math.abs(total-100)<0.01;
+  el.textContent = `Publisher shares: ${total}% (SESAC export: ${Math.round(total/2*100)/100}%) ${ok?'✓':'— must equal 100%'}`;
+  el.className = 'pct-total '+(ok?'pct-ok':'pct-err');
+}
+
+function openSms(href) {
+  const idx = document.getElementById('outreachSongPicker').value;
+  const iframe = document.createElement('iframe');
+  iframe.style.display = 'none';
+  iframe.src = href;
+  document.body.appendChild(iframe);
+  setTimeout(() => {
+    document.body.removeChild(iframe);
+    document.getElementById('outreachSongPicker').value = idx;
+    renderOutreach();
+  }, 1000);
+}
+
+function openGmail(key) {
+  const href = window._gmailLinks && window._gmailLinks[key];
+  if(href) window.open(href, '_blank');
+}
+
+function showToast(msg, type='success') {
+  const toast = document.getElementById('toast');
+  toast.textContent = msg;
+  toast.className = `toast${type==='error'?' error':''}`;
+  requestAnimationFrame(() => {
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 3500);
+  });
+}
+
+function setSyncStatus(msg, type='info') {
+  const el = document.getElementById('syncStatus');
+  el.style.display = 'block';
+  el.textContent = msg;
+  el.style.background = type==='success'?'#EAF3E4': type==='error'?'#FAEAE5':'var(--gold-muted)';
+  el.style.color = type==='success'?'var(--sage)': type==='error'?'var(--rust)':'var(--ink)';
+  el.style.border = type==='success'?'1px solid #C2DDB8': type==='error'?'1px solid #E8C4B8':'1px solid var(--gold)';
+}
+
+function logSync(msg) {
+  const log = document.getElementById('syncLog');
+  const ts = new Date().toLocaleTimeString();
+  if(log.textContent === 'No syncs run yet.') log.textContent = '';
+  log.textContent += `[${ts}] ${msg}\n`;
+  log.scrollTop = log.scrollHeight;
+}
+
+async function testConnection() {
+  const cfg = getSettings();
+  if(!cfg.sheetId || !cfg.apiKey) { setSyncStatus('Please enter both a Sheet ID and API Key first.', 'error'); return; }
+  setSyncStatus('Testing connection...', 'info');
+  try {
+    const tab = encodeURIComponent(cfg.sheetTab || 'Form Responses 1');
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${cfg.sheetId}/values/${tab}!A1:A1?key=${cfg.apiKey}`;
+    const res = await fetch(url);
+    if(res.ok) { setSyncStatus('✓ Connection successful! Sheet is reachable.', 'success'); logSync('Connection test passed.'); }
+    else { const err = await res.json(); setSyncStatus(`Connection failed: ${err.error?.message || res.status}`, 'error'); }
+  } catch(e) { setSyncStatus(`Connection error: ${e.message}`, 'error'); }
+}
+
+async function syncFromSheet() {
+  const cfg = getSettings();
+  if(!cfg.sheetId || !cfg.apiKey) {
+    setSyncStatus('Go to ⚙ Settings & Sync to add your Sheet ID and API Key first.', 'error');
+    showToast('Please add Sheet ID and API Key in Settings first.', 'error');
+    showTab('settings'); return;
+  }
+
+  // Update all sync buttons to show loading state
+  document.querySelectorAll('[onclick="syncFromSheet()"]').forEach(btn => {
+    btn.dataset.orig = btn.textContent;
+    btn.textContent = '⟳ Syncing...';
+    btn.disabled = true;
+  });
+
+  setSyncStatus('Syncing...', 'info');
+  logSync('Starting sync...');
+  try {
+    const tab = encodeURIComponent(cfg.sheetTab || 'Form Responses 1');
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${cfg.sheetId}/values/${tab}?key=${cfg.apiKey}`;
+    const res = await fetch(url);
+    if(!res.ok) { const err = await res.json(); setSyncStatus(`Sync failed: ${err.error?.message}`, 'error'); logSync(`Error: ${err.error?.message}`); return; }
+    const data = await res.json();
+    const rows = data.values || [];
+    if(rows.length < 2) { setSyncStatus('Sheet has no responses yet.', 'info'); logSync('No rows found.'); return; }
+
+    // First row = headers
+    const headers = rows[0].map(h => h.trim());
+    const colIdx = (name) => {
+      const exact = headers.findIndex(h => h.toLowerCase() === name.toLowerCase());
+      if(exact >= 0) return exact;
+      const partial = headers.findIndex(h => h.toLowerCase().includes(name.toLowerCase().split(' ')[0]));
+      return partial;
+    };
+
+    const songCol = colIdx(cfg.col_song || 'Song Title');
+    const nameCol = colIdx(cfg.col_name || 'legal name');
+    const ipiCol  = colIdx(cfg.col_ipi  || 'IPI');
+    const proCol  = colIdx(cfg.col_pro  || 'PRO');
+    const pctCol  = colIdx(cfg.col_pct  || 'share');
+    const pubCol     = colIdx(cfg.col_pub     || 'Publisher');
+    const pubIpiCol  = colIdx(cfg.col_pub_ipi || 'Publisher IPI');
+    const pubProCol  = colIdx(cfg.col_pub_pro || 'Publisher PRO');
+    const pubPctCol  = colIdx(cfg.col_pub_pct || 'Publisher Share %');
+    const emailCol   = colIdx(cfg.col_email   || 'Your email');
+    const phoneCol   = colIdx(cfg.col_phone   || 'Your phone');
+
+    logSync(`Headers found: ${headers.join(', ')}`);
+    logSync(`Mapped cols — Song:${songCol} Name:${nameCol} IPI:${ipiCol} PRO:${proCol} Pct:${pctCol} Pub:${pubCol} PubIPI:${pubIpiCol} PubPRO:${pubProCol} Email:${emailCol} Phone:${phoneCol}`);
+
+    let matched = 0, unmatched = 0;
+    const dataRows = rows.slice(1);
+
+    dataRows.forEach((row, ri) => {
+      const submittedSongTitle = (row[songCol] || '').trim().toLowerCase();
+      const writerName = (row[nameCol] || '').trim();
+      if(!submittedSongTitle || !writerName) return;
+
+      // Find matching song in vault (fuzzy match on title)
+      const songIdx = songs.findIndex(s =>
+        s.title.trim().toLowerCase() === submittedSongTitle ||
+        s.title.trim().toLowerCase().includes(submittedSongTitle) ||
+        submittedSongTitle.includes(s.title.trim().toLowerCase())
+      );
+
+      if(songIdx < 0) {
+        logSync(`Row ${ri+2}: Song "${row[songCol]}" not found in vault — skipped.`);
+        unmatched++; return;
+      }
+
+      const song = songs[songIdx];
+      // Find or create writer entry
+      let writerIdx = (song.writers || []).findIndex(w => w.name.toLowerCase() === writerName.toLowerCase());
+
+      const updatedWriter = {
+        name: writerName,
+        ipi:  ipiCol >= 0  ? (row[ipiCol] || '') : '',
+        pro:  proCol >= 0  ? (row[proCol] || '') : '',
+        pct:  pctCol >= 0  ? (row[pctCol] || '') : '',
+      };
+
+      // Handle publisher — update existing or add new entry to publishers array
+      const pubName   = pubCol    >= 0 ? (row[pubCol]    || '') : '';
+      const pubIpi    = pubIpiCol >= 0 ? (row[pubIpiCol] || '') : '';
+      const pubPro    = pubProCol >= 0 ? (row[pubProCol] || '') : '';
+      const pubPct    = pubPctCol >= 0 ? (row[pubPctCol] || '') : '';
+
+      if(pubName) {
+        if(!songs[songIdx].publishers) songs[songIdx].publishers = [];
+        const existingPubIdx = songs[songIdx].publishers.findIndex(p => p.name.toLowerCase() === pubName.toLowerCase());
+        if(existingPubIdx >= 0) {
+          songs[songIdx].publishers[existingPubIdx] = { ...songs[songIdx].publishers[existingPubIdx], name: pubName, ipi: pubIpi, pro: pubPro, pct: pubPct };
+        } else {
+          songs[songIdx].publishers.push({ name: pubName, ipi: pubIpi, pro: pubPro, pct: pubPct });
+        }
+        logSync(`Updated publisher "${pubName}" on "${songs[songIdx].title}"`);
+      }
+
+      if(writerIdx >= 0) {
+        // Update existing
+        songs[songIdx].writers[writerIdx] = {...songs[songIdx].writers[writerIdx], ...updatedWriter};
+        logSync(`Updated writer "${writerName}" on "${song.title}"`);
+      } else {
+        // Add new writer
+        if(!songs[songIdx].writers) songs[songIdx].writers = [];
+        songs[songIdx].writers.push(updatedWriter);
+        logSync(`Added new writer "${writerName}" to "${song.title}"`);
+      }
+
+      // Mark as responded in outreach and save contact info
+      if(!songs[songIdx].outreach) songs[songIdx].outreach = {};
+      if(!songs[songIdx].outreach[writerName]) songs[songIdx].outreach[writerName] = {};
+      songs[songIdx].outreach[writerName].status = 'responded';
+      if(emailCol >= 0 && row[emailCol]) {
+        songs[songIdx].outreach[writerName].email = row[emailCol].trim();
+        logSync(`Saved email for "${writerName}": ${row[emailCol].trim()}`);
+      }
+      if(phoneCol >= 0 && row[phoneCol]) {
+        songs[songIdx].outreach[writerName].phone = row[phoneCol].trim();
+        logSync(`Saved phone for "${writerName}": ${row[phoneCol].trim()}`);
+      }
+      matched++;
+    });
+
+    localStorage.setItem('srh_songs', JSON.stringify(songs));
+    const summary = `✓ Sync complete — ${matched} writer${matched!==1?'s':''} updated${unmatched>0?`, ${unmatched} unmatched rows`:''}`;
+    setSyncStatus(summary, 'success');
+    logSync(summary);
+    renderVault();
+
+    // If on Song Entry tab and editing a song, reload it so changes are visible immediately
+    if(editingIndex >= 0) {
+      loadSong(editingIndex);
+    }
+
+    // Show a toast notification on whichever tab the user is on
+    showToast(summary);
+
+  } catch(e) {
+    setSyncStatus(`Sync error: ${e.message}`, 'error');
+    logSync(`Error: ${e.message}`);
+    showToast(`Sync error: ${e.message}`, 'error');
+  }
+
+  // Restore sync buttons
+  document.querySelectorAll('[onclick="syncFromSheet()"]').forEach(btn => {
+    btn.textContent = btn.dataset.orig || '⟳ Sync from Sheet';
+    btn.disabled = false;
+  });
+}
+
+
+
+// ── SESAC EXPORT FROM SONG ENTRY ────────────────────────────────────
+function exportCurrentSongSESAC() {
+  const me = getMyInfo();
+
+  // Use vault data if editing a saved song, otherwise read from form
+  let song, formWriters, pubRows;
+
+  if(editingIndex >= 0) {
+    song = songs[editingIndex];
+    formWriters = (song.writers || []).filter(w => w.name);
+    pubRows = (song.publishers || []).filter(p => p.name);
+  } else {
+    song = getSongData();
+    formWriters = [...(document.querySelectorAll('#writersContainer .writer-row')||[])].map(r => ({
+      name: r.querySelector('.w-name')?.value || '',
+      ipi:  r.querySelector('.w-ipi')?.value  || '',
+      pro:  r.querySelector('.w-pro')?.value  || '',
+      pct:  r.querySelector('.w-pct')?.value  || '',
+    })).filter(w => w.name);
+    pubRows = [...(document.querySelectorAll('#publishersContainer .writer-row')||[])].map(r => ({
+      name: r.querySelector('.p-name')?.value || '',
+      ipi:  r.querySelector('.p-ipi')?.value  || '',
+      pro:  r.querySelector('.p-pro')?.value  || '',
+      pct:  r.querySelector('.p-pct')?.value  || '',
+    })).filter(p => p.name);
+  }
+
+  if(!song.title || !song.title.trim()) { alert('Please open a song from the vault first.'); return; }
+
+  const headers = [
+    'SONG TITLE *','SONG # *','SONG AKA(S)','PUBLIC DOMAIN','ISWC #',
+    '© REGISTRATION #','© REGISTRATION DATE',
+    'WRITER FIRST NAME *','WRITER MIDDLE NAME','WRITER LAST NAME *',
+    'WRITER IPI #','WRITER TYPE *','WRITER AFFILIATION','SESAC WRITER ACCOUNT #',
+    'PUBLISHER NAME *','PUBLISHER IPI #','PUBLISHER TYPE *','PUBLISHER AFFILIATION','SESAC PUBLISHER ACCOUNT #',
+    'WRITER / PUBLISHER % SHARE *',
+    'ARTIST NAME *','ALBUM TITLE','RECORD LABEL','RELEASE DATE','ISRC','MP3 FILE NAME'
+  ];
+
+  // Always put Mason Douglas first, then co-writers
+  const myNameLower = (me.name || '').toLowerCase();
+  const myRowInForm = formWriters.find(w => w.name.toLowerCase() === myNameLower);
+  const otherWriters = formWriters.filter(w => w.name.toLowerCase() !== myNameLower);
+  const myRow = {
+    name: me.name || '',
+    ipi:  myRowInForm?.ipi || me.ipi || '',
+    pro:  myRowInForm?.pro || me.pro || '',
+    pct:  myRowInForm?.pct || me.pct || '',
+  };
+  const allWriters = me.name ? [myRow, ...otherWriters] : formWriters;
+
+  const sesacAccount = me.sesac_account || '958353';
+  const rows = [headers];
+
+  allWriters.forEach((w, writerIdx) => {
+    const nameParts = w.name.trim().split(' ');
+    const firstName  = nameParts[0] || '';
+    const middleName = nameParts.length > 2 ? nameParts.slice(1,-1).join(' ') : '';
+    const lastName   = nameParts.length > 1 ? nameParts[nameParts.length-1] : '';
+    const isMe = w.name.toLowerCase() === myNameLower;
+
+    // Match publisher: by index position, fall back to first publisher
+    const publisher = pubRows[writerIdx] || pubRows[0] || {};
+
+    // SESAC: sum of all Writer/Publisher % Share must equal 50
+    const totalPct = Math.round(((parseFloat(w.pct) || 0) + (parseFloat(publisher.pct) || 0)) / 4 * 10000) / 10000;
+    const splitPct = Number.isInteger(totalPct) ? String(totalPct) : totalPct.toString();
+
+    // Map PRO names to exact SESAC dropdown values
+    const formatPro = (pro) => {
+      const map = {
+        'SESAC': 'SESAC - USA', 'ASCAP': 'ASCAP - USA',
+        'BMI': 'BMI - USA', 'GMR': 'GMR - USA',
+        'None': '', '': ''
+      };
+      if(!pro) return '';
+      if(map.hasOwnProperty(pro)) return map[pro];
+      return pro.includes(' - ') ? pro : `${pro} - USA`;
+    };
+
+    rows.push([
+      song.title      || '',          // SONG TITLE *
+      '',                             // SONG # * (left blank per SESAC instructions)
+      song.altTitle   || '',          // SONG AKA(S)
+      '',                             // PUBLIC DOMAIN
+      song.iswc       || '',          // ISWC #
+      '',                             // © REGISTRATION #
+      '',                             // © REGISTRATION DATE
+      firstName,                      // WRITER FIRST NAME *
+      middleName,                     // WRITER MIDDLE NAME
+      lastName,                       // WRITER LAST NAME *
+      w.ipi           || '',          // WRITER IPI #
+      'Composer/Author',              // WRITER TYPE *
+      formatPro(w.pro),               // WRITER AFFILIATION
+      isMe ? sesacAccount : '',       // SESAC WRITER ACCOUNT #
+      publisher.name  || '',          // PUBLISHER NAME *
+      publisher.ipi   || '',          // PUBLISHER IPI #
+      publisher.name ? 'Original Publisher' : '', // PUBLISHER TYPE *
+      formatPro(publisher.pro),       // PUBLISHER AFFILIATION
+      '',                             // SESAC PUBLISHER ACCOUNT #
+      splitPct,                       // WRITER / PUBLISHER % SHARE *
+      song.artist     || '',          // ARTIST NAME *
+      song.album      || '',          // ALBUM TITLE
+      song.label      || '',          // RECORD LABEL
+      song.releaseDate|| '',          // RELEASE DATE
+      song.isrc       || '',          // ISRC
+      ''                              // MP3 FILE NAME
+    ]);
+  });
+
+  const safeName = song.title.replace(/[^a-z0-9]/gi,'_');
+  const fileName = `SESAC_${safeName}_${new Date().toISOString().slice(0,10)}.xlsx`;
+
+  const doExport = () => {
+    try {
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.aoa_to_sheet(rows);
+      ws['!cols'] = [
+        {wch:30},{wch:10},{wch:20},{wch:12},{wch:15},
+        {wch:18},{wch:18},{wch:18},{wch:18},{wch:18},
+        {wch:15},{wch:16},{wch:18},{wch:20},{wch:25},
+        {wch:15},{wch:18},{wch:18},{wch:22},{wch:22},
+        {wch:20},{wch:20},{wch:18},{wch:15},{wch:18},{wch:18}
+      ];
+      ws['!dataValidation'] = [
+        { sqref:'L2:L1048576', type:'list', formula1:'"Arranger,Composer/Author"' },
+        { sqref:'Q2:Q1048576', type:'list', formula1:'"Original Publisher,Administrator,Sub Publisher"' },
+        { sqref:'D2:D1048576', type:'list', formula1:'"Yes,No"' },
+      ];
+      XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
+      // Force Writer Type (col L) and Publisher Type (col Q) cells to explicit strings
+      const range = XLSX.utils.decode_range(ws['!ref']);
+      for(let r = 1; r <= range.e.r; r++) {
+        const lCell = XLSX.utils.encode_cell({r, c:11}); // col L = Writer Type
+        const qCell = XLSX.utils.encode_cell({r, c:16}); // col Q = Publisher Type
+        if(ws[lCell]) { ws[lCell].t = 's'; ws[lCell].v = 'Composer/Author'; ws[lCell].w = 'Composer/Author'; }
+        if(ws[qCell] && ws[qCell].v) { ws[qCell].t = 's'; ws[qCell].w = ws[qCell].v; }
+      }
+      XLSX.writeFile(wb, fileName);
+      showToast(`✓ SESAC .xlsx downloaded for "${song.title}"`);
+    } catch(e) {
+      alert('Export error: ' + e.message);
+    }
+  };
+
+  if(typeof XLSX !== 'undefined') {
+    doExport();
+  } else {
+    const s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+    s.onload = doExport;
+    s.onerror = () => alert('Could not load export library. Check your internet connection.');
+    document.head.appendChild(s);
+  }
+}
+
+
+// ── MLC EXPORT ───────────────────────────────────────────────────────
+function exportMLC(songIndices) {
+  const headers = [
+    'PRIMARY TITLE *','MLC SONG CODE','MEMBERS SONG ID','ISWC','AKA TITLE †','AKA TITLE TYPE CODE †',
+    'WRITER LAST NAME *','WRITER FIRST NAME','WRITER IPI NUMBER','WRITER ROLE CODE *',
+    'MLC PUBLISHER NUMBER','PUBLISHER NAME *','PUBLISHER IPI NUMBER *',
+    'ADMINISTRATOR MLC PUBLISHER NUMBER','ADMINISTRATOR NAME †','ADMINISTRATOR IPI NUMBER †',
+    'COLLECTION SHARE *',
+    'RECORDING TITLE †','RECORDING ARTIST NAME †','RECORDING ISRC','RECORDING LABEL'
+  ];
+
+  let toExport;
+  if(songIndices === 'unsubmitted') {
+    toExport = songs.filter(s => !(s.registrations||{}).mlc_submitted);
+    if(!toExport.length){ showToast('All songs already submitted to MLC!', 'error'); return; }
+  } else if(Array.isArray(songIndices)) {
+    toExport = songIndices.map(i => songs[i]);
+  } else {
+    toExport = songs;
+  }
+  if(!toExport.length){ alert('No songs to export.'); return; }
+
+  const myInfo = getMyInfo();
+  const rows = [headers];
+
+  toExport.forEach(song => {
+    const writers = (song.writers || []).filter(w => w.name);
+    const publishers = (song.publishers || []).filter(p => p.name);
+
+    writers.forEach((w, i) => {
+      const nameParts = w.name.trim().split(' ');
+      const firstName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : '';
+      const lastName = nameParts[0] || '';
+      const publisher = publishers[i] || publishers[0] || {};
+
+      // COLLECTION SHARE: (writer pct + publisher pct) / 4 — same math as SESAC
+      const totalPct = ((parseFloat(w.pct)||0) + (parseFloat(publisher.pct)||0)) / 4;
+      const collectionShare = Math.round(totalPct * 10000) / 10000;
+
+      // First writer row includes song-level data; subsequent rows leave PRIMARY TITLE blank
+      const isFirstWriter = i === 0;
+
+      rows.push([
+        isFirstWriter ? (song.title || '') : '',   // PRIMARY TITLE *
+        '',                                         // MLC SONG CODE
+        '',                                         // MEMBERS SONG ID
+        isFirstWriter ? (song.iswc || '') : '',    // ISWC
+        // AKA TITLE and AKA TYPE CODE — both or neither
+        isFirstWriter && song.altTitle ? song.altTitle : '',  // AKA TITLE †
+        isFirstWriter && song.altTitle ? 'AT' : '',           // AKA TITLE TYPE CODE †
+        lastName,                                   // WRITER LAST NAME *
+        firstName,                                  // WRITER FIRST NAME
+        w.ipi || '',                               // WRITER IPI NUMBER
+        'CA',                                       // WRITER ROLE CODE *
+        '',                                         // MLC PUBLISHER NUMBER
+        publisher.name || '',                       // PUBLISHER NAME *
+        publisher.ipi || '',                        // PUBLISHER IPI NUMBER *
+        '',                                         // ADMINISTRATOR MLC PUBLISHER NUMBER
+        '',                                         // ADMINISTRATOR NAME † (leave blank — would need ADMIN IPI too)
+        '',                                         // ADMINISTRATOR IPI NUMBER † (leave blank — would need ADMIN NAME too)
+        collectionShare,                            // COLLECTION SHARE *
+        // RECORDING TITLE and RECORDING ARTIST NAME — both or neither
+        isFirstWriter && song.title && song.artist ? song.title : '',   // RECORDING TITLE †
+        isFirstWriter && song.title && song.artist ? song.artist : '',  // RECORDING ARTIST NAME †
+        isFirstWriter ? (song.isrc || '') : '',    // RECORDING ISRC
+        isFirstWriter ? (song.label || '') : '',   // RECORDING LABEL
+      ]);
+    });
+  });
+
+  const doMLCExport = () => {
+    try {
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.aoa_to_sheet(rows);
+      ws['!cols'] = [
+        {wch:25},{wch:12},{wch:15},{wch:15},{wch:20},{wch:18},
+        {wch:18},{wch:18},{wch:18},{wch:15},
+        {wch:20},{wch:25},{wch:20},
+        {wch:25},{wch:25},{wch:20},
+        {wch:15},
+        {wch:25},{wch:25},{wch:18},{wch:20}
+      ];
+      XLSX.utils.book_append_sheet(wb, ws, 'Format');
+      XLSX.writeFile(wb, `MLC_Bulk_Works_${new Date().toISOString().slice(0,10)}.xlsx`);
+      showToast(`✓ MLC .xlsx downloaded — ${toExport.length} song(s)`);
+    } catch(e) { alert('Export error: ' + e.message); }
+  };
+
+  if(typeof XLSX !== 'undefined') doMLCExport();
+  else { const s=document.createElement('script'); s.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js'; s.onload=doMLCExport; document.head.appendChild(s); }
+}
+
+// ── MUSICMARK EXPORT (BMI / ASCAP / SOCAN) ───────────────────────────
+function exportMusicMark(songIndices) {
+  const headers = [
+    'Title','Alternative Title','ISWC','Duration','Language',
+    'Writer First Name','Writer Last Name','Writer IPI','Writer PRO','Writer Role','Writer Share %',
+    'Publisher Name','Publisher IPI','Publisher PRO','Publisher Share %',
+    'Artist','Album','Label','Release Date','ISRC'
+  ];
+
+  let toExport;
+  if(songIndices === 'unsubmitted') {
+    toExport = songs.filter(s => !(s.registrations||{}).musicmark_submitted);
+    if(!toExport.length){ showToast('All songs already submitted to MusicMark!', 'error'); return; }
+  } else if(Array.isArray(songIndices)) {
+    toExport = songIndices.map(i => songs[i]);
+  } else {
+    toExport = songs;
+  }
+  if(!toExport.length){ alert('No songs to export.'); return; }
+
+  const rows = [headers];
+  toExport.forEach(song => {
+    const writers = (song.writers || []).filter(w => w.name);
+    const publishers = (song.publishers || []).filter(p => p.name);
+    writers.forEach((w, i) => {
+      const nameParts = w.name.trim().split(' ');
+      const firstName = nameParts[0] || '';
+      const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : '';
+      const publisher = publishers[i] || publishers[0] || {};
+      rows.push([
+        song.title||'', song.altTitle||'', song.iswc||'', song.duration||'', song.language||'English',
+        firstName, lastName, w.ipi||'', w.pro||'', 'CA', parseFloat(w.pct)||0,
+        publisher.name||'', publisher.ipi||'', publisher.pro||'', parseFloat(publisher.pct)||0,
+        song.artist||'', song.album||'', song.label||'', song.releaseDate||'', song.isrc||''
+      ]);
+    });
+  });
+
+  const doExport = () => {
+    try {
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.aoa_to_sheet(rows);
+      XLSX.utils.book_append_sheet(wb, ws, 'Works');
+      XLSX.writeFile(wb, `MusicMark_Bulk_Works_${new Date().toISOString().slice(0,10)}.xlsx`);
+      showToast(`✓ MusicMark .xlsx downloaded — ${toExport.length} song(s)`);
+    } catch(e) { alert('Export error: ' + e.message); }
+  };
+  if(typeof XLSX !== 'undefined') doExport();
+  else { const s=document.createElement('script'); s.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js'; s.onload=doExport; document.head.appendChild(s); }
+}
+
+function exportSESAC(songIndices) {
+  // Build CSV rows matching SESAC template exactly
+  const headers = [
+    'SONG TITLE *','SONG # *','SONG AKA(S)','PUBLIC DOMAIN','ISWC #',
+    '© REGISTRATION #','© REGISTRATION DATE',
+    'WRITER FIRST NAME *','WRITER MIDDLE NAME','WRITER LAST NAME *',
+    'WRITER IPI #','WRITER TYPE *','WRITER AFFILIATION','SESAC WRITER ACCOUNT #',
+    'PUBLISHER NAME *','PUBLISHER IPI #','PUBLISHER TYPE *','PUBLISHER AFFILIATION','SESAC PUBLISHER ACCOUNT #',
+    'WRITER / PUBLISHER % SHARE *',
+    'ARTIST NAME *','ALBUM TITLE','RECORD LABEL','RELEASE DATE','ISRC','MP3 FILE NAME'
+  ];
+
+  let toExport;
+  if(songIndices === 'unsubmitted') {
+    toExport = songs.filter(s => !(s.registrations||{}).sesac_submitted);
+    if(!toExport.length){ showToast('All songs are already marked as submitted!', 'error'); return; }
+  } else if(Array.isArray(songIndices)) {
+    toExport = songIndices.map(i => songs[i]);
+  } else {
+    toExport = songs;
+  }
+  if(!toExport.length){ alert('No songs to export.'); return; }
+
+  const myInfo = getMyInfo();
+  const mySesacAccount = myInfo.sesac_account || '958353';
+  const rows = [headers];
+
+  toExport.forEach((song, songNum) => {
+    const writers = (song.writers || []).filter(w => w.name);
+    const publishers = (song.publishers || []).filter(p => p.name);
+
+    // Map PRO names to exact SESAC dropdown values
+    const formatPro = (pro) => {
+      const map = {
+        'SESAC': 'SESAC - USA', 'ASCAP': 'ASCAP - USA',
+        'BMI': 'BMI - USA', 'GMR': 'GMR - USA',
+        'None': '', '': ''
+      };
+      if(!pro) return '';
+      if(map.hasOwnProperty(pro)) return map[pro];
+      return pro.includes(' - ') ? pro : `${pro} - USA`;
+    };
+
+    writers.forEach((w, writerIdx) => {
+      const nameParts = w.name.trim().split(' ');
+      const firstName = nameParts[0] || '';
+      const middleName = nameParts.length > 2 ? nameParts.slice(1, -1).join(' ') : '';
+      const lastName = nameParts.length > 1 ? nameParts[nameParts.length - 1] : '';
+      const isMe = myInfo.name && w.name.toLowerCase() === myInfo.name.toLowerCase();
+      const sesacWriterAccount = isMe ? mySesacAccount : '';
+
+      // Match publisher by writer index, fall back to first
+      const publisher = publishers[writerIdx] || publishers[0] || {};
+
+      // SESAC: sum of all Writer/Publisher % Share must equal 50
+      const bulkTotalPct = Math.round(((parseFloat(w.pct) || 0) + (parseFloat(publisher.pct) || 0)) / 4 * 10000) / 10000;
+      const bulkSplitPct = Number.isInteger(bulkTotalPct) ? String(bulkTotalPct) : bulkTotalPct.toString();
+
+      rows.push([
+        song.title || '',                    // SONG TITLE *
+        '',                                  // SONG # * (left blank per SESAC instructions)
+        song.altTitle || '',                 // SONG AKA(S)
+        '',                                  // PUBLIC DOMAIN
+        song.iswc || '',                     // ISWC #
+        '',                                  // © REGISTRATION #
+        '',                                  // © REGISTRATION DATE
+        firstName,                           // WRITER FIRST NAME *
+        middleName,                          // WRITER MIDDLE NAME
+        lastName,                            // WRITER LAST NAME *
+        w.ipi || '',                         // WRITER IPI #
+        'Composer/Author',                   // WRITER TYPE *
+        formatPro(w.pro),                    // WRITER AFFILIATION
+        sesacWriterAccount,                  // SESAC WRITER ACCOUNT #
+        publisher.name || '',                // PUBLISHER NAME *
+        publisher.ipi || '',                 // PUBLISHER IPI #
+        publisher.name ? 'Original Publisher' : '',  // PUBLISHER TYPE *
+        formatPro(publisher.pro),            // PUBLISHER AFFILIATION
+        '',                                  // SESAC PUBLISHER ACCOUNT #
+        bulkSplitPct,                        // WRITER / PUBLISHER % SHARE *
+        song.artist || '',                   // ARTIST NAME *
+        song.album || '',                    // ALBUM TITLE
+        song.label || '',                    // RECORD LABEL
+        song.releaseDate || '',              // RELEASE DATE
+        song.isrc || '',                     // ISRC
+        ''                                   // MP3 FILE NAME
+      ]);
+    });
+  });
+
+  const doBulkExport = () => {
+    try {
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.aoa_to_sheet(rows);
+      ws['!cols'] = [
+        {wch:30},{wch:10},{wch:20},{wch:12},{wch:15},
+        {wch:18},{wch:18},{wch:18},{wch:18},{wch:18},
+        {wch:15},{wch:16},{wch:18},{wch:20},{wch:25},
+        {wch:15},{wch:18},{wch:18},{wch:22},{wch:22},
+        {wch:20},{wch:20},{wch:18},{wch:15},{wch:18},{wch:18}
+      ];
+      ws['!dataValidation'] = [
+        { sqref:'L2:L1048576', type:'list', formula1:'"Arranger,Composer/Author"' },
+        { sqref:'Q2:Q1048576', type:'list', formula1:'"Original Publisher,Administrator,Sub Publisher"' },
+        { sqref:'D2:D1048576', type:'list', formula1:'"Yes,No"' },
+      ];
+      XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
+      // Force Writer Type (col L) and Publisher Type (col Q) cells to explicit strings
+      const range = XLSX.utils.decode_range(ws['!ref']);
+      for(let r = 1; r <= range.e.r; r++) {
+        const lCell = XLSX.utils.encode_cell({r, c:11}); // col L = Writer Type
+        const qCell = XLSX.utils.encode_cell({r, c:16}); // col Q = Publisher Type
+        if(ws[lCell]) { ws[lCell].t = 's'; ws[lCell].v = 'Composer/Author'; ws[lCell].w = 'Composer/Author'; }
+        if(ws[qCell] && ws[qCell].v) { ws[qCell].t = 's'; ws[qCell].w = ws[qCell].v; }
+      }
+      XLSX.writeFile(wb, `SESAC_Bulk_Song_Recordings_${new Date().toISOString().slice(0,10)}.xlsx`);
+      logSync(`SESAC bulk export: ${toExport.length} song(s), ${rows.length - 1} writer row(s).`);
+      showToast(`✓ SESAC .xlsx downloaded — ${toExport.length} song(s)`);
+    } catch(e) {
+      alert('Export error: ' + e.message);
+    }
+  };
+
+  if(typeof XLSX !== 'undefined') {
+    doBulkExport();
+  } else {
+    const s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+    s.onload = doBulkExport;
+    s.onerror = () => alert('Could not load export library. Check your internet connection.');
+    document.head.appendChild(s);
+  }
+}
+
+
+async function autoSaveToSheet(song) {
+  const cfg = getSettings();
+  if(!cfg.sheetId || !cfg.apiKey || !cfg.oauthToken) return; // silently skip if not configured
+  try {
+    const vaultTab = encodeURIComponent('Vault Backup');
+    // Read existing rows to find if song already exists
+    const readUrl = `https://sheets.googleapis.com/v4/spreadsheets/${cfg.sheetId}/values/${vaultTab}?key=${cfg.apiKey}`;
+    const readRes = await fetch(readUrl);
+    let rows = [];
+    if(readRes.ok){ const d=await readRes.json(); rows=d.values||[]; }
+
+    const songRow = songToRow(song);
+    const headers = ['Title','Alt Title','ISWC','Duration','Genre','Language','Release Date','ISRC','UPC','Artist','Album','Label','Distributor','BPM','Key','Instrumentation','Mood','Writers (JSON)','Publishers (JSON)','Last Updated'];
+
+    // Find existing row index (match by title)
+    const existingIdx = rows.findIndex((r,i)=>i>0 && r[0]&&r[0].toLowerCase()===song.title.toLowerCase());
+    const writeUrl = `https://sheets.googleapis.com/v4/spreadsheets/${cfg.sheetId}/values/${vaultTab}?valueInputOption=RAW&key=${cfg.apiKey}`;
+
+    if(rows.length===0) {
+      // Write headers + row
+      await fetch(writeUrl, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify({values:[headers, songRow]})});
+    } else if(existingIdx>=0) {
+      // Update existing row
+      const rowNum = existingIdx+1;
+      const updateUrl = `https://sheets.googleapis.com/v4/spreadsheets/${cfg.sheetId}/values/${vaultTab}!A${rowNum}?valueInputOption=RAW&key=${cfg.apiKey}`;
+      await fetch(updateUrl, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify({values:[songRow]})});
+    } else {
+      // Append new row
+      const appendUrl = `https://sheets.googleapis.com/v4/spreadsheets/${cfg.sheetId}/values/${vaultTab}:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS&key=${cfg.apiKey}`;
+      await fetch(appendUrl, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({values:[songRow]})});
+    }
+    logSync(`Auto-saved "${song.title}" to Vault Backup tab.`);
+  } catch(e) {
+    // Silent fail — don't interrupt the user's workflow
+    console.warn('Auto-save to sheet failed:', e.message);
+  }
+}
+
+function songToRow(s) {
+  return [
+    s.title||'', s.altTitle||'', s.iswc||'', s.duration||'', s.genre||'',
+    s.language||'English', s.releaseDate||'', s.isrc||'', s.upc||'',
+    s.artist||'', s.album||'', s.label||'', s.distributor||'',
+    s.bpm||'', s.key||'', s.instrumentation||'', s.mood||'',
+    JSON.stringify(s.writers||[]),
+    JSON.stringify(s.publishers||[]),
+    new Date().toISOString()
+  ];
+}
+
+// ── JSON EXPORT / IMPORT ────────────────────────────────────────────
+function exportVault() {
+  const data = {
+    exported: new Date().toISOString(),
+    version: '1.0',
+    songs: songs
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `songwriter-vault-backup-${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  logSync(`Exported ${songs.length} songs to JSON backup file.`);
+  setSyncStatus(`✓ Backup downloaded — ${songs.length} songs exported.`, 'success');
+}
+
+function importVault() {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.json';
+  input.onchange = (e) => {
+    const file = e.target.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try {
+        const data = JSON.parse(ev.target.result);
+        const imported = data.songs || data; // support both wrapped and raw arrays
+        if(!Array.isArray(imported)) throw new Error('Invalid backup file format.');
+
+        // Merge: keep existing songs, add/update from import
+        let added=0, updated=0;
+        imported.forEach(importedSong => {
+          const existingIdx = songs.findIndex(s => s.title.toLowerCase()===importedSong.title.toLowerCase());
+          if(existingIdx>=0){
+            songs[existingIdx] = {...importedSong, ...songs[existingIdx]}; // local wins for conflicts
+            updated++;
+          } else {
+            songs.push(importedSong);
+            added++;
+          }
+        });
+        localStorage.setItem('srh_songs', JSON.stringify(songs));
+        renderVault();
+        setSyncStatus(`✓ Import complete — ${added} songs added, ${updated} updated.`, 'success');
+        logSync(`Imported from file: ${added} new, ${updated} updated.`);
+      } catch(err) {
+        setSyncStatus(`Import failed: ${err.message}`, 'error');
+      }
+    };
+    reader.readAsText(file);
+  };
+  input.click();
+}
+
+// ── MY INFO ─────────────────────────────────────────────────────────
+// ── EMAIL SONG INFO ─────────────────────────────────────────────────
+function emailSongInfo() {
+  const d = getSongData();
+  if(!d.title.trim()) { alert('Please enter a song title first.'); return; }
+
+  // Gather co-writer emails from outreach data if available
+  const songIdx = editingIndex >= 0 ? editingIndex : -1;
+  const outreach = songIdx >= 0 ? (songs[songIdx].outreach || {}) : {};
+
+  // Build recipient list from saved co-writer emails (skip first writer = Mason)
+  const cowriters = (d.writers || []).slice(1).filter(w => w.name);
+  const emails = cowriters.map(w => (outreach[w.name] || {}).email || '').filter(Boolean);
+  const to = emails.join(',');
+
+  // Build writer breakdown
+  const writerLines = (d.writers || []).filter(w => w.name).map((w, i) =>
+    `  ${i + 1}. ${w.name}${w.ipi ? ' | IPI: ' + w.ipi : ''}${w.pro ? ' | PRO: ' + w.pro : ''}${w.pct ? ' | Share: ' + w.pct + '%' : ''}`
+  ).join('\n');
+
+  // Build publisher breakdown
+  const pubLines = (d.publishers || []).filter(p => p.name).map((p, i) =>
+    `  ${i + 1}. ${p.name}${p.ipi ? ' | IPI: ' + p.ipi : ''}${p.pro ? ' | PRO: ' + p.pro : ''}${p.pct ? ' | Share: ' + p.pct + '%' : ''}`
+  ).join('\n');
+
+  const subject = `Song info — "${d.title}"`;
+
+  const body =
+`Here's the current song info for "${d.title}" for your records.
+
+────────────────────────────
+SONG DETAILS
+────────────────────────────
+Title:         ${d.title || '—'}${d.altTitle ? '\nAlt Title:     ' + d.altTitle : ''}
+Duration:      ${d.duration || '—'}
+Genre:         ${d.genre || '—'}
+Language:      ${d.language || 'English'}${d.isrc ? '\nISRC:          ' + d.isrc : ''}${d.iswc ? '\nISWC:          ' + d.iswc : ''}${d.releaseDate ? '\nRelease Date:  ' + d.releaseDate : ''}
+${d.artist ? 'Artist:        ' + d.artist : ''}${d.album ? '\nAlbum:         ' + d.album : ''}${d.label ? '\nLabel:         ' + d.label : ''}${d.distributor ? '\nDistributor:   ' + d.distributor : ''}
+
+────────────────────────────
+WRITERS
+────────────────────────────
+${writerLines || '  None listed'}
+${pubLines ? '\n────────────────────────────\nPUBLISHERS\n────────────────────────────\n' + pubLines : ''}
+
+Please let me know if anything looks off.
+
+— Mason Douglas`;
+
+  const gmailUrl = `https://mail.google.com/mail/?view=cm&to=${encodeURIComponent(to)}&cc=masondouglasmusic%40gmail.com&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  window.open(gmailUrl, '_blank');
+}
+
+function clearForm() {
+  editingIndex = -1;
+  // Clear all fields first
+  ['songTitle','altTitle','iswc','duration','releaseDate','upc','isrc','album','lyrics','bpm','key','instrumentation','mood'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+
+  // Auto-fill from My Info
+  const me = getMyInfo();
+  document.getElementById('genre').value        = me.genre || '';
+  document.getElementById('language').value     = me.language || 'English';
+  document.getElementById('artist').value       = me.artist || '';
+  document.getElementById('label').value        = me.label || '';
+  document.getElementById('distributor').value  = me.distributor || '';
+
+  // Pre-fill my writer row
+  document.getElementById('writersContainer').innerHTML='';
+  addWriter(me.name ? {
+    name: me.name,
+    ipi:  me.ipi  || '',
+    pro:  me.pro  || '',
+    pct:  me.pct  || ''
+  } : null);
+
+  // Pre-fill my publisher if set
+  document.getElementById('publishersContainer').innerHTML='';
+  if(me.pub_name) {
+    addPublisher({ name: me.pub_name, ipi: me.pub_ipi||'', pro: me.pub_pro||'', pct:'' });
+  }
+
+  calcPct();
+}
+
+function getSongData() {
+  return {
+    title:document.getElementById('songTitle').value,
+    altTitle:document.getElementById('altTitle').value,
+    iswc:document.getElementById('iswc').value,
+    duration:document.getElementById('duration').value,
+    genre:document.getElementById('genre').value,
+    language:document.getElementById('language').value,
+    releaseDate:document.getElementById('releaseDate').value,
+    upc:document.getElementById('upc').value,
+    isrc:document.getElementById('isrc').value,
+    artist:document.getElementById('artist').value,
+    album:document.getElementById('album').value,
+    label:document.getElementById('label').value,
+    distributor:document.getElementById('distributor').value,
+    lyrics:document.getElementById('lyrics').value,
+    bpm:document.getElementById('bpm').value,
+    key:document.getElementById('key').value,
+    instrumentation:document.getElementById('instrumentation').value,
+    mood:document.getElementById('mood').value,
+    writers:[...(document.querySelectorAll('#writersContainer .writer-row')||[])].map(r=>({name:r.querySelector('.w-name').value,ipi:r.querySelector('.w-ipi').value,pro:r.querySelector('.w-pro').value,pct:r.querySelector('.w-pct').value})),
+    publishers:[...(document.querySelectorAll('#publishersContainer .writer-row')||[])].map(r=>({name:r.querySelector('.p-name').value,ipi:r.querySelector('.p-ipi').value,pro:r.querySelector('.p-pro').value,pct:r.querySelector('.p-pct').value})),
+    registrations:{},outreach:{}
+  };
+}
+
+async function deleteSong() {
+  if(editingIndex < 0) { alert('No song selected.'); return; }
+  const song = songs[editingIndex];
+  if(!confirm(`Delete "${song.title}" permanently? This cannot be undone.`)) return;
+  try {
+    if(song._id) await supaFetch(`/songs?id=eq.${song._id}`, { method: 'DELETE' });
+    songs.splice(editingIndex, 1);
+    localStorage.setItem('srh_songs', JSON.stringify(songs));
+    editingIndex = -1;
+    showToast(`✓ "${song.title}" deleted`);
+    showTab('vault');
+  } catch(e) {
+    alert('Delete failed: ' + e.message);
+  }
+}
+
+async function saveSong() {
+  const d = getSongData();
+  if(!d.title.trim()){alert('Please enter a song title.');return;}
+  if(editingIndex>=0){
+    songs[editingIndex]={...songs[editingIndex],...d,outreach:songs[editingIndex].outreach||{}};
+    await saveSongToSupabase(songs[editingIndex]);
+  } else {
+    songs.push(d);
+    await saveSongToSupabase(songs[songs.length-1]);
+  }
+  localStorage.setItem('srh_songs',JSON.stringify(songs));
+  showToast(`✓ "${d.title}" saved`);
+  showTab('vault');
+}
+
+function loadSong(idx) {
+  editingIndex=idx;
+  const s=songs[idx];
+  const map={songTitle:'title',altTitle:'altTitle',iswc:'iswc',duration:'duration',releaseDate:'releaseDate',upc:'upc',isrc:'isrc',artist:'artist',album:'album',label:'label',distributor:'distributor',lyrics:'lyrics',bpm:'bpm',key:'key',instrumentation:'instrumentation',mood:'mood',genre:'genre',language:'language'};
+  Object.entries(map).forEach(([id,k])=>{const el=document.getElementById(id);if(el&&s[k]!==undefined)el.value=s[k];});
+  document.getElementById('writersContainer').innerHTML='';
+  document.getElementById('publishersContainer').innerHTML='';
+  (s.writers||[]).forEach(w=>addWriter(w));
+  (s.publishers||[]).forEach(p=>addPublisher(p));
+  calcPct();showTab('entry');
+}
+
+function renderVault() {
+  const list=document.getElementById('songsList');
+  const empty=document.getElementById('emptyVault');
+  list.innerHTML='';
+  if(!songs.length){empty.style.display='block';return;}
+  empty.style.display='none';
+  songs.forEach((s,i)=>{
+    const o=s.outreach||{};
+    const activeCowriters=(s.writers||[]).filter(w=>w.name).slice(1);
+    const totalCo=activeCowriters.length;
+    const responded=activeCowriters.filter(w=>(o[w.name]||{}).status==='responded').length;
+    const sesacSubmitted = (s.registrations||{}).sesac_submitted;
+    const mlcSubmitted = (s.registrations||{}).mlc_submitted;
+    const row=document.createElement('div');
+    row.className='song-row';
+
+    const leftDiv = document.createElement('div');
+    leftDiv.style.flex='1';
+    leftDiv.style.cursor='pointer';
+    leftDiv.onclick=()=>loadSong(i);
+    leftDiv.innerHTML=`<div class="song-title-text">${s.title}</div><div class="song-meta">${s.artist||'No artist'}${s.genre?' · '+s.genre:''}</div>`;
+
+    const rightDiv = document.createElement('div');
+    rightDiv.style.cssText='display:flex;align-items:center;gap:8px;flex-wrap:wrap;';
+    rightDiv.innerHTML=`
+      <div class="badges">
+        ${totalCo>0?`<span class="badge ${responded>0?'responded':'pending'}">${responded}/${totalCo} co-writers</span>`:''}
+        ${sesacSubmitted ? `<span class="badge registered">SESAC ✓</span>` : `<span class="badge none">SESAC</span>`}
+        ${mlcSubmitted ? `<span class="badge registered">MLC ✓</span>` : `<span class="badge none">MLC</span>`}
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;">
+        <button class="btn" style="font-size:11px;padding:5px 10px;flex-shrink:0;" onclick="event.stopPropagation();toggleSesacSubmitted(${i})">
+          ${sesacSubmitted ? 'Unmark SESAC' : 'Mark SESAC ✓'}
+        </button>
+        <button class="btn" style="font-size:11px;padding:5px 10px;flex-shrink:0;" onclick="event.stopPropagation();toggleMlcSubmitted(${i})">
+          ${mlcSubmitted ? 'Unmark MLC' : 'Mark MLC ✓'}
+        </button>
+      </div>`;
+
+    row.appendChild(leftDiv);
+    row.appendChild(rightDiv);
+    list.appendChild(row);
+  });
+}
+
+async function toggleSesacSubmitted(i) {
+  if(!songs[i].registrations) songs[i].registrations = {};
+  const current = songs[i].registrations.sesac_submitted;
+  songs[i].registrations.sesac_submitted = !current;
+  localStorage.setItem('srh_songs', JSON.stringify(songs));
+  await saveSongToSupabase(songs[i]);
+  renderVault();
+  showToast(!current ? `✓ "${songs[i].title}" marked as submitted to SESAC` : `"${songs[i].title}" unmarked from SESAC`);
+}
+
+async function toggleMlcSubmitted(i) {
+  if(!songs[i].registrations) songs[i].registrations = {};
+  const current = songs[i].registrations.mlc_submitted;
+  songs[i].registrations.mlc_submitted = !current;
+  localStorage.setItem('srh_songs', JSON.stringify(songs));
+  await saveSongToSupabase(songs[i]);
+  renderVault();
+  showToast(!current ? `✓ "${songs[i].title}" marked as submitted to MLC` : `"${songs[i].title}" unmarked from MLC`);
+}
+
+function populatePicker(id) {
+  const sel=document.getElementById(id);
+  const cur=sel.value;
+  sel.innerHTML='<option value="">Choose a song...</option>';
+  songs.forEach((s,i)=>{const o=document.createElement('option');o.value=i;o.textContent=s.title;sel.appendChild(o);});
+  if(cur!=='')sel.value=cur;
+}
+
+function getInitials(name){return(name||'?').split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2);}
+
+function renderOutreach() {
+  const idx=document.getElementById('outreachSongPicker').value;
+  const content=document.getElementById('outreachContent');
+  const empty=document.getElementById('outreachEmpty');
+  if(idx===''){content.style.display='none';empty.style.display='block';return;}
+  content.style.display='block';empty.style.display='none';
+  const s=songs[parseInt(idx)];
+  const formUrl=getFormUrl();
+  document.getElementById('globalLink').textContent=formUrl;
+  const container=document.getElementById('writerOutreachCards');
+  container.innerHTML='';
+  const cowriters=(s.writers||[]).filter(w=>w.name).slice(1);
+  if(!cowriters.length){
+    container.innerHTML=`<div class="empty"><div class="empty-icon">♫</div>No co-writers on this song. Add writers in the song entry form.</div>`;
+    return;
+  }
+  cowriters.forEach(w=>{
+    const outreach=(s.outreach||{})[w.name]||{status:'not-sent',phone:'',email:''};
+    const mode=outreachModes[w.name]||'text';
+    const firstName=w.name.split(' ')[0];
+    const songTitle=s.title;
+    const textMsg=`Hey ${firstName}! Mason Douglas here. Can you fill out your writer info for "${songTitle}"? Takes 2 mins: ${formUrl}`;
+    const emailSubject=`Writer info needed — ${songTitle}`;
+    const emailBody=`Hi ${firstName},\n\nI'm registering "${songTitle}" and need your writer details (IPI, PRO, share %). Could you fill this out when you get a chance?\n\n${formUrl}\n\nTakes about 2 minutes. Thanks!\n\nMason Douglas`;
+    const safeId=w.name.replace(/[^a-zA-Z0-9]/g,'_');
+    const statusDot=outreach.status==='responded'?'dot-green':outreach.status==='invited'?'dot-amber':'dot-gray';
+    const statusLabel=outreach.status==='responded'?'Responded':outreach.status==='invited'?'Invited':'Not contacted';
+    const phone = outreach.phone || '';
+    const outreachEmail = outreach.email || w.email || '';
+    const smsHref = `sms:${phone}&body=${encodeURIComponent(textMsg)}`;
+    const mailHref=`https://mail.google.com/mail/?view=cm&to=${encodeURIComponent(outreachEmail)}&su=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(emailBody)}`;
+    let previewText=textMsg;
+    if(mode==='email')previewText=`To: ${outreachEmail||'(email)'}\nSubject: ${emailSubject}\n\n${emailBody}`;
+    else if(mode==='both')previewText=`TEXT:\n${textMsg}\n\nEMAIL:\nSubject: ${emailSubject}\n\n${emailBody}`;
+    else if(mode==='link')previewText=`Link:\n${formUrl}`;
+    const safeName = w.name.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+    const card=document.createElement('div');
+    card.className='outreach-card';
+    card.innerHTML=`
+      <div class="outreach-header">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <div class="avatar">${getInitials(w.name)}</div>
+          <div><div class="writer-label">${w.name}</div><div class="writer-sublabel">${w.pro||'No PRO'} · ${w.pct||'?'}% share</div></div>
+        </div>
+        <div class="status-indicator"><span class="dot ${statusDot}"></span>${statusLabel}</div>
+      </div>
+      <div class="contact-grid">
+        <div class="field"><label>Phone</label><input type="tel" placeholder="(615) 000-0000" value="${outreach.phone||''}" onchange="saveContact(${parseInt(idx)},'${safeName}','phone',this.value)" id="phone_${safeId}"></div>
+        <div class="field"><label>Email</label><input type="email" placeholder="their@email.com" value="${outreachEmail}" onchange="saveContact(${parseInt(idx)},'${safeName}','email',this.value)" id="email_${safeId}"></div>
+      </div>
+      <div class="method-pills">
+        <button class="mpill ${mode==='text'?'active':''}" onclick="setMode('${safeName}','text',this.parentElement)">Text</button>
+        <button class="mpill ${mode==='email'?'active':''}" onclick="setMode('${safeName}','email',this.parentElement)">Email</button>
+        <button class="mpill ${mode==='both'?'active':''}" onclick="setMode('${safeName}','both',this.parentElement)">Both</button>
+        <button class="mpill ${mode==='link'?'active':''}" onclick="setMode('${safeName}','link',this.parentElement)">Link only</button>
+      </div>
+      <div class="msg-preview" id="msgprev_${safeId}"></div>
+      <div class="btn-row">
+        ${mode==='text'||mode==='both'?`<button class="btn gold" onclick="openSms('${smsHref.replace(/'/g,"\\'")}')">Open in Messages</button>`:''}
+        ${mode==='email'||mode==='both'?`<button class="btn primary" onclick="openGmail('${safeId}')">Open in Gmail</button>`:''}
+        <button class="btn" onclick="copyText('${formUrl.replace(/'/g,"\\'")}',this)">Copy Link</button>
+        <button class="btn success" onclick="markStatus(${parseInt(idx)},'${safeName}','invited',this)">Mark Invited</button>
+        ${outreach.status==='invited'?`<button class="btn" onclick="markStatus(${parseInt(idx)},'${safeName}','responded',this)">Mark Responded</button>`:''}
+      </div>`;
+    if(!window._gmailLinks) window._gmailLinks = {};
+    window._gmailLinks[safeId] = mailHref;
+    // Set preview text after card creation to avoid special chars breaking innerHTML
+    card.querySelector(`#msgprev_${safeId}`).textContent = previewText;
+    container.appendChild(card);
+  });
+}
+
+function setMode(name,mode,pillRow){
+  outreachModes[name]=mode;
+  pillRow.querySelectorAll('.mpill').forEach(p=>p.classList.remove('active'));
+  event.target.classList.add('active');
+  renderOutreach();
+}
+
+function saveContact(songIdx,writerName,field,value){
+  if(!songs[songIdx].outreach)songs[songIdx].outreach={};
+  if(!songs[songIdx].outreach[writerName])songs[songIdx].outreach[writerName]={status:'not-sent'};
+  songs[songIdx].outreach[writerName][field]=value;
+  localStorage.setItem('srh_songs',JSON.stringify(songs));
+  saveSongToSupabase(songs[songIdx]);
+}
+
+function markStatus(songIdx,writerName,status,btn){
+  if(!songs[songIdx].outreach)songs[songIdx].outreach={};
+  if(!songs[songIdx].outreach[writerName])songs[songIdx].outreach[writerName]={};
+  songs[songIdx].outreach[writerName].status=status;
+  localStorage.setItem('srh_songs',JSON.stringify(songs));
+  saveSongToSupabase(songs[songIdx]);
+  btn.textContent=status==='invited'?'Invited ✓':'Responded ✓';
+  btn.className='btn success';
+  setTimeout(()=>renderOutreach(),700);
+}
+
+function copyText(text,btn){
+  navigator.clipboard.writeText(text).then(()=>{
+    const orig=btn.textContent;btn.textContent='Copied!';
+    setTimeout(()=>{btn.textContent=orig;},1800);
+  });
+}
+
+function toggleOrg(el,org){
+  el.classList.toggle('selected');
+  if(selectedOrgs.has(org))selectedOrgs.delete(org);else selectedOrgs.add(org);
+  refreshPreview();
+}
+
+function formatExport(s){
+  if(!s)return'Select a song to see formatted output...';
+  const orgs=[...selectedOrgs];
+  if(!orgs.length)return'No organizations selected.';
+  let out='';
+  orgs.forEach(org=>{
+    out+=`${'═'.repeat(48)}\n${org.toUpperCase()} — WORK REGISTRATION\n${'═'.repeat(48)}\n\n`;
+    out+=`Song Title:    ${s.title||'—'}\n`;
+    if(s.altTitle)out+=`Alt Title:     ${s.altTitle}\n`;
+    out+=`Duration:      ${s.duration||'—'}\nGenre:         ${s.genre||'—'}\nLanguage:      ${s.language||'English'}\n`;
+    if(s.iswc)out+=`ISWC:          ${s.iswc}\n`;
+    if(s.isrc)out+=`ISRC:          ${s.isrc}\n`;
+    if(s.upc)out+=`UPC:           ${s.upc}\n`;
+    if(s.releaseDate)out+=`Release Date:  ${s.releaseDate}\n`;
+    out+=`\nArtist:        ${s.artist||'—'}\n`;
+    if(s.album)out+=`Album:         ${s.album}\n`;
+    if(s.label)out+=`Label:         ${s.label}\n`;
+    if(s.distributor)out+=`Distributor:   ${s.distributor}\n`;
+    out+='\nWRITERS:\n';
+    (s.writers||[]).forEach((w,i)=>out+=`  ${i+1}. ${w.name||'—'} | IPI: ${w.ipi||'—'} | PRO: ${w.pro||'—'} | Share: ${w.pct||'—'}%\n`);
+    if((s.publishers||[]).length){out+='\nPUBLISHERS:\n';(s.publishers||[]).forEach((p,i)=>out+=`  ${i+1}. ${p.name||'—'} | IPI: ${p.ipi||'—'} | PRO: ${p.pro||'—'} | Share: ${p.pct||'—'}%\n`);}
+    if(org==='mlc')out+='\nMLC NOTES: Mechanical rights · Musical composition · US streams/downloads\n';
+    if(org==='soundexchange')out+=`\nSOUNDEXCHANGE: Digital performance royalties · ISRC: ${s.isrc||'REQUIRED'}\n`;
+    if(['sesac','ascap','bmi'].includes(org))out+=`\n${org.toUpperCase()} NOTES: Performance rights · Musical work registration\n`;
+    out+='\n';
+  });
+  return out;
+}
+
+function refreshPreview(){
+  const idx=document.getElementById('exportSongPicker').value;
+  document.getElementById('previewBox').textContent=formatExport(idx!==''?songs[parseInt(idx)]:null);
+  const hasSelection = idx !== '';
+  const selBtn=document.getElementById('sesacSelectedBtn');
+  if(selBtn) selBtn.style.display=hasSelection?'inline-flex':'none';
+}
+
+function exportSESACSelected() {
+  const idx=document.getElementById('exportSongPicker').value;
+  if(idx===''){alert('Please select a song first.');return;}
+  exportSESAC([parseInt(idx)]);
+}
+
+function copyExport(){
+  copyText(document.getElementById('previewBox').textContent,event.target);
+}
+
+clearForm();
+loadAllSettings().then(() => {
+  clearForm(); // re-run clearForm after settings loaded so My Info auto-fills
+});
+loadSongsFromSupabase();
+
+// Auto-refresh from Supabase every 3 minutes
+setInterval(() => {
+  loadSongsFromSupabase(true);
+}, 3 * 60 * 1000);
+</script>
+</body>
+</html>
