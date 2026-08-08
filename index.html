@@ -362,13 +362,12 @@ async function submitAuth() {
       <p style="font-size:13px;color:var(--ink-light);line-height:1.6;margin-bottom:1rem;">Some songs get registered directly by your admin instead of you exporting them yourself. This opens a pre-filled Gmail compose window with the writer &amp; publisher info for one song, ready to send to Mega Gusta.</p>
       <div class="field-grid">
         <div class="field full-width"><label>Song</label><select id="adminEmailSongPicker" onchange="onAdminEmailSongChange()"><option value="">Choose a song...</option></select></div>
-        <div class="field full-width"><label>Release MP3 <span style="font-weight:400;text-transform:none;letter-spacing:0;">(optional)</span></label><input type="file" id="adminEmailMp3" accept="audio/mpeg,audio/mp3,.mp3" onchange="onAdminMp3Selected(this)"><span class="hint" id="adminMp3Info">No file attached</span></div>
       </div>
       <div class="preview-box" id="adminEmailPreview" style="display:none;margin-top:1rem;"></div>
       <div class="btn-row">
         <button class="btn gold" id="sendAdminEmailBtn" onclick="emailAdminInfo()" disabled>&#9993; Email Admin</button>
       </div>
-      <p class="hint" style="margin-top:8px;">Sends to: trina@megustamusicadmin.com, tricia@megustamusicadmin.com. Opens in a new tab using whatever Google account you're logged into &mdash; attach the MP3 there if you picked one above, then hit Send yourself.</p>
+      <p class="hint" style="margin-top:8px;">Sends to: trina@megustamusicadmin.com, tricia@megustamusicadmin.com. Opens in a new tab using whatever Google account you're logged into &mdash; attach an MP3 there if you want, then hit Send yourself.</p>
     </div>
   </div>
   <div id="settings" class="section">
@@ -767,7 +766,6 @@ supabaseClient.auth.onAuthStateChange((event, session) => {
 
 // ---- Email Admin ----
 const ADMIN_EMAIL_RECIPIENTS = ['trina@megustamusicadmin.com', 'tricia@megustamusicadmin.com'];
-let adminMp3File = null;
 
 function populateAdminEmailPicker() {
   const sel = document.getElementById('adminEmailSongPicker'); if(!sel) return;
@@ -781,7 +779,7 @@ function buildAdminEmailBody(song) {
   const publishers = (song.publishers||[]).filter(p=>p.name);
   const writerLines = writers.map((w,i)=>`  ${i+1}. ${w.name}${w.ipi?' | IPI: '+w.ipi:''}${w.pro?' | PRO: '+w.pro:''}${w.pct?' | Share: '+w.pct+'%':''}`).join('\n') || '  None listed';
   const pubLines = publishers.map((p,i)=>`  ${i+1}. ${p.name}${p.ipi?' | IPI: '+p.ipi:''}${p.pro?' | PRO: '+p.pro:''}${p.pct?' | Share: '+p.pct+'%':''}`).join('\n');
-  let out = `Hi,\n\nCould you register this one for us? Writer info below${adminMp3File?' — MP3 of the release is attached.':'.'}\n\n`;
+  let out = `Hi,\n\nCould you register this one for us? Writer info below.\n\n`;
   out += `Title: ${song.title||'—'}\n`;
   if(song.altTitle) out += `Alt Title: ${song.altTitle}\n`;
   if(song.iswc) out += `ISWC: ${song.iswc}\n`;
@@ -808,21 +806,12 @@ function onAdminEmailSongChange() {
   if(btn) btn.disabled = false;
 }
 
-function onAdminMp3Selected(input) {
-  adminMp3File = input.files && input.files[0] ? input.files[0] : null;
-  const info = document.getElementById('adminMp3Info');
-  info.textContent = adminMp3File ? `${adminMp3File.name} (${(adminMp3File.size/1024/1024).toFixed(1)} MB) — attach this in the Gmail window before sending` : 'No file attached';
-  const idx = document.getElementById('adminEmailSongPicker').value;
-  if(idx !== '') document.getElementById('adminEmailPreview').textContent = buildAdminEmailBody(songs[parseInt(idx)]);
-}
-
 function emailAdminInfo() {
   const idx = document.getElementById('adminEmailSongPicker').value;
   if(idx === '') { showToast('Choose a song first.', 'error'); return; }
   const song = songs[parseInt(idx)];
   const subject = `Song registration — "${song.title}"`;
-  let body = buildAdminEmailBody(song);
-  if(adminMp3File) body += `\n\n(Don't forget to attach ${adminMp3File.name} to this email — it can't be attached automatically.)`;
+  const body = buildAdminEmailBody(song);
   const to = ADMIN_EMAIL_RECIPIENTS.join(',');
   window.open(`https://mail.google.com/mail/?view=cm&to=${encodeURIComponent(to)}&cc=masondouglasmusic%40gmail.com&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`, '_blank');
 }
