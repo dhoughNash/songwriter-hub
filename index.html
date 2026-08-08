@@ -7,6 +7,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
 :root {
   --cream: #F5F0E8; --warm-white: #FDFAF5; --ink: #1A1612; --ink-light: #4A4440;
@@ -357,6 +358,21 @@ async function submitAuth() {
       </div>
       <p class="hint" style="margin-top:8px;">Upload at <a href="https://www.musicmark.com" target="_blank" style="color:var(--gold);">musicmark.com</a>. Works for BMI, ASCAP, and SOCAN registrations.</p>
     </div>
+    <div class="card">
+      <div class="card-title">Email Admin &mdash; Mega Gusta Music</div>
+      <p style="font-size:13px;color:var(--ink-light);line-height:1.6;margin-bottom:1rem;">Some songs get registered directly by your admin instead of you exporting them yourself. This sends the writer &amp; publisher info for one song straight to Mega Gusta, from <strong>mason@masondouglasmusic.com</strong>, with the release MP3 attached if you add one below.</p>
+      <div class="field-grid">
+        <div class="field full-width"><label>Song</label><select id="adminEmailSongPicker" onchange="onAdminEmailSongChange()"><option value="">Choose a song...</option></select></div>
+        <div class="field full-width"><label>Release MP3 <span style="font-weight:400;text-transform:none;letter-spacing:0;">(optional)</span></label><input type="file" id="adminEmailMp3" accept="audio/mpeg,audio/mp3,.mp3" onchange="onAdminMp3Selected(this)"><span class="hint" id="adminMp3Info">No file attached</span></div>
+      </div>
+      <div class="preview-box" id="adminEmailPreview" style="display:none;margin-top:1rem;"></div>
+      <div class="btn-row">
+        <button class="btn" id="gmailConnectBtn" onclick="connectAdminGmail()">Connect Gmail (mason@masondouglasmusic.com)</button>
+        <button class="btn gold" id="sendAdminEmailBtn" onclick="sendAdminEmail()" disabled>&#9993; Send to Admin</button>
+      </div>
+      <p class="hint" style="margin-top:8px;">Sends to: trina@megustamusicadmin.com, tricia@megustamusicadmin.com. Requires a one-time Gmail connection &mdash; see Settings &amp; Sync for setup.</p>
+      <div id="adminEmailStatus" class="hint" style="margin-top:4px;"></div>
+    </div>
   </div>
   <div id="settings" class="section">
     <div class="page-header"><div><div class="page-title">Settings &amp; Sync</div><div class="page-sub">Connect your Google Sheet to pull co-writer responses</div></div></div>
@@ -440,6 +456,28 @@ async function submitAuth() {
         <li>Go to <strong>APIs &amp; Services &rarr; Credentials &rarr; + Create Credentials &rarr; API Key</strong></li>
         <li>Copy the key and paste it above. That's it &mdash; it's free and never expires.</li>
         <li><strong>Important:</strong> Make sure your Google Sheet is set to <em>"Anyone with the link can view"</em></li>
+      </ol>
+    </div>
+    <div class="card">
+      <div class="card-title">Admin Email &mdash; Gmail API</div>
+      <p style="font-size:13px;color:var(--ink-light);line-height:1.6;margin-bottom:1rem;">Lets the &ldquo;Email Admin&rdquo; button on Export &amp; Submit send writer info straight to Mega Gusta from mason@masondouglasmusic.com, with the release MP3 attached. One-time setup below.</p>
+      <div class="field-grid">
+        <div class="field full-width"><label>Google OAuth Client ID</label><input type="text" id="gmailClientId" placeholder="xxxxxxxxxxxx.apps.googleusercontent.com" oninput="saveGmailAdminSettings()"><span class="hint">From Google Cloud Console &mdash; see setup steps below. This is a public identifier, safe to store here (not a secret).</span></div>
+      </div>
+      <div class="hint" style="margin-top:8px;">Sends to: trina@megustamusicadmin.com, tricia@megustamusicadmin.com</div>
+    </div>
+    <div class="card">
+      <div class="card-title">How to set up Admin Email sending (10 min, one time)</div>
+      <ol style="font-size:13px;color:var(--ink-light);line-height:2;padding-left:1.25rem;">
+        <li>Go to <a href="https://console.cloud.google.com" target="_blank" style="color:var(--gold);">console.cloud.google.com</a> signed in as <strong>mason@masondouglasmusic.com</strong></li>
+        <li><strong>Select a project &rarr; New Project</strong> &rarr; name it anything (e.g. &ldquo;SongVault Admin Mail&rdquo;) &rarr; Create</li>
+        <li>Search <strong>Gmail API</strong> in the top search bar &rarr; click it &rarr; click <strong>Enable</strong></li>
+        <li>Go to <strong>APIs &amp; Services &rarr; OAuth consent screen</strong>. Choose <strong>External</strong>, fill in the app name and your email, and save through the steps</li>
+        <li>On the <strong>Test users</strong> step, add <strong>mason@masondouglasmusic.com</strong> as a test user &mdash; this keeps the app in &ldquo;Testing&rdquo; mode, which is fine and needs no Google review</li>
+        <li>Go to <strong>APIs &amp; Services &rarr; Credentials &rarr; + Create Credentials &rarr; OAuth client ID</strong>. Application type: <strong>Web application</strong></li>
+        <li>Under <strong>Authorized JavaScript origins</strong>, add <code>https://dhoughnash.github.io</code> (this app's GitHub Pages domain)</li>
+        <li>Click <strong>Create</strong>, copy the <strong>Client ID</strong>, and paste it above</li>
+        <li>Back on <strong>Export &amp; Submit</strong>, click <strong>Connect Gmail</strong> and sign in as mason@masondouglasmusic.com when prompted &mdash; then you can send</li>
       </ol>
     </div>
     <div class="card">
@@ -553,7 +591,7 @@ function getMyInfo() { const s = JSON.parse(localStorage.getItem('srh_settings')
 function showSavedInfo() { const el = document.getElementById('myInfoSaved'); el.style.display = 'block'; setTimeout(() => el.style.display = 'none', 3000); }
 function showTab(t) {
   const tabs = ['vault','entry','cowriters','submit','settings']; document.querySelectorAll('.nav-tab').forEach((el,i) => el.classList.toggle('active', tabs[i]===t)); document.querySelectorAll('.section').forEach(s => s.classList.remove('active')); document.getElementById(t).classList.add('active');
-  if(t==='vault') renderVault(); if(t==='submit') { refreshPreview(); } if(t==='cowriters') { loadFormUrl(); populatePicker('outreachSongPicker'); renderOutreach(); } if(t==='settings') loadAllSettings();
+  if(t==='vault') renderVault(); if(t==='submit') { refreshPreview(); populateAdminEmailPicker(); } if(t==='cowriters') { loadFormUrl(); populatePicker('outreachSongPicker'); renderOutreach(); } if(t==='settings') { loadAllSettings(); loadGmailAdminSettings(); }
 }
 function addWriter(data) {
   const c = document.getElementById('writersContainer'); const d = document.createElement('div'); d.className = 'writer-row';
@@ -750,6 +788,163 @@ supabaseClient.auth.onAuthStateChange((event, session) => {
   const { data: { session } } = await supabaseClient.auth.getSession();
   if(session) { await onAuthReady(session); }
 })();
+
+// ---- Email Admin (Gmail API) ----
+const GMAIL_ADMIN_SENDER = 'mason@masondouglasmusic.com';
+const GMAIL_ADMIN_RECIPIENTS = ['trina@megustamusicadmin.com', 'tricia@megustamusicadmin.com'];
+const GMAIL_SEND_SCOPE = 'https://www.googleapis.com/auth/gmail.send';
+let gmailAccessToken = null;
+let gmailTokenClient = null;
+let adminMp3File = null;
+
+function getGmailClientId() { return localStorage.getItem('srh_gmail_client_id') || ''; }
+function saveGmailAdminSettings() {
+  const val = document.getElementById('gmailClientId')?.value.trim() || '';
+  localStorage.setItem('srh_gmail_client_id', val);
+  gmailTokenClient = null; // force re-init with the new client id
+}
+function loadGmailAdminSettings() { const el = document.getElementById('gmailClientId'); if(el) el.value = getGmailClientId(); }
+
+function populateAdminEmailPicker() {
+  const sel = document.getElementById('adminEmailSongPicker'); if(!sel) return;
+  const cur = sel.value; sel.innerHTML = '<option value="">Choose a song...</option>';
+  songs.forEach((s,i) => { const o = document.createElement('option'); o.value = i; o.textContent = s.title; sel.appendChild(o); });
+  if(cur !== '' && songs[parseInt(cur)]) sel.value = cur;
+}
+
+function buildAdminEmailBody(song) {
+  const writers = (song.writers||[]).filter(w=>w.name);
+  const publishers = (song.publishers||[]).filter(p=>p.name);
+  const writerLines = writers.map((w,i)=>`  ${i+1}. ${w.name}${w.ipi?' | IPI: '+w.ipi:''}${w.pro?' | PRO: '+w.pro:''}${w.pct?' | Share: '+w.pct+'%':''}`).join('\n') || '  None listed';
+  const pubLines = publishers.map((p,i)=>`  ${i+1}. ${p.name}${p.ipi?' | IPI: '+p.ipi:''}${p.pro?' | PRO: '+p.pro:''}${p.pct?' | Share: '+p.pct+'%':''}`).join('\n');
+  let out = `Hi,\n\nCould you register this one for us? Writer info below${adminMp3File?' — MP3 of the release is attached.':'.'}\n\n`;
+  out += `Title: ${song.title||'—'}\n`;
+  if(song.altTitle) out += `Alt Title: ${song.altTitle}\n`;
+  if(song.iswc) out += `ISWC: ${song.iswc}\n`;
+  if(song.isrc) out += `ISRC: ${song.isrc}\n`;
+  if(song.upc) out += `UPC: ${song.upc}\n`;
+  out += `Duration: ${song.duration||'—'}\nGenre: ${song.genre||'—'}\nLanguage: ${song.language||'English'}\n`;
+  if(song.releaseDate) out += `Release Date: ${song.releaseDate}\n`;
+  out += `Artist: ${song.artist||'—'}\n`;
+  if(song.album) out += `Album: ${song.album}\n`;
+  if(song.label) out += `Label: ${song.label}\n`;
+  out += `\nWRITERS:\n${writerLines}\n`;
+  if(pubLines) out += `\nPUBLISHERS:\n${pubLines}\n`;
+  out += `\nThanks!\nMason`;
+  return out;
+}
+
+function onAdminEmailSongChange() {
+  const idx = document.getElementById('adminEmailSongPicker').value;
+  const box = document.getElementById('adminEmailPreview');
+  if(idx === '') { box.style.display = 'none'; updateSendAdminBtnState(); return; }
+  box.textContent = buildAdminEmailBody(songs[parseInt(idx)]);
+  box.style.display = 'block';
+  updateSendAdminBtnState();
+}
+
+function onAdminMp3Selected(input) {
+  adminMp3File = input.files && input.files[0] ? input.files[0] : null;
+  const info = document.getElementById('adminMp3Info');
+  info.textContent = adminMp3File ? `${adminMp3File.name} (${(adminMp3File.size/1024/1024).toFixed(1)} MB)` : 'No file attached';
+  const idx = document.getElementById('adminEmailSongPicker').value;
+  if(idx !== '') document.getElementById('adminEmailPreview').textContent = buildAdminEmailBody(songs[parseInt(idx)]);
+}
+
+function updateSendAdminBtnState() {
+  const btn = document.getElementById('sendAdminEmailBtn'); if(!btn) return;
+  const idx = document.getElementById('adminEmailSongPicker')?.value;
+  btn.disabled = !(gmailAccessToken && idx !== '' && idx !== undefined);
+}
+
+function connectAdminGmail() {
+  const clientId = getGmailClientId();
+  if(!clientId) { showToast('Add your Google OAuth Client ID in Settings first.', 'error'); showTab('settings'); return; }
+  if(typeof google === 'undefined' || !google.accounts || !google.accounts.oauth2) { showToast('Google sign-in script still loading — try again in a moment.', 'error'); return; }
+  if(!gmailTokenClient || gmailTokenClient._clientId !== clientId) {
+    gmailTokenClient = google.accounts.oauth2.initTokenClient({
+      client_id: clientId,
+      scope: GMAIL_SEND_SCOPE,
+      callback: (resp) => {
+        const statusEl = document.getElementById('adminEmailStatus');
+        if(resp.error) { if(statusEl) statusEl.textContent = `Connect failed: ${resp.error}`; showToast(`Gmail connect failed: ${resp.error}`, 'error'); return; }
+        gmailAccessToken = resp.access_token;
+        const btn = document.getElementById('gmailConnectBtn'); if(btn) { btn.textContent = '✓ Gmail connected'; btn.classList.add('success'); }
+        updateSendAdminBtnState();
+        showToast('✓ Gmail connected');
+      }
+    });
+    gmailTokenClient._clientId = clientId;
+  }
+  gmailTokenClient.requestAccessToken({ hint: GMAIL_ADMIN_SENDER });
+}
+
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result.split(',')[1]);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+function wrapBase64(b64) { return (b64.match(/.{1,76}/g) || []).join('\r\n'); }
+function utf8ToBase64Url(str) {
+  const bytes = new TextEncoder().encode(str);
+  let binary = ''; bytes.forEach(b => binary += String.fromCharCode(b));
+  return btoa(binary).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+}
+
+async function sendAdminEmail() {
+  const idx = document.getElementById('adminEmailSongPicker').value;
+  if(idx === '') { showToast('Choose a song first.', 'error'); return; }
+  if(!gmailAccessToken) { showToast('Connect Gmail first.', 'error'); return; }
+  const song = songs[parseInt(idx)];
+  const statusEl = document.getElementById('adminEmailStatus');
+  const btn = document.getElementById('sendAdminEmailBtn');
+  btn.disabled = true; btn.textContent = 'Sending...'; statusEl.textContent = '';
+  try {
+    const subject = `Song registration — "${song.title}"`;
+    const body = buildAdminEmailBody(song);
+    const boundary = 'srh_boundary_' + Date.now();
+    let mime = '';
+    mime += `From: Mason Douglas <${GMAIL_ADMIN_SENDER}>\r\n`;
+    mime += `To: ${GMAIL_ADMIN_RECIPIENTS.join(', ')}\r\n`;
+    mime += `Subject: ${subject}\r\n`;
+    mime += `MIME-Version: 1.0\r\n`;
+    mime += `Content-Type: multipart/mixed; boundary="${boundary}"\r\n\r\n`;
+    mime += `--${boundary}\r\n`;
+    mime += `Content-Type: text/plain; charset="UTF-8"\r\n`;
+    mime += `Content-Transfer-Encoding: 7bit\r\n\r\n`;
+    mime += `${body}\r\n\r\n`;
+    if(adminMp3File) {
+      const b64 = await fileToBase64(adminMp3File);
+      mime += `--${boundary}\r\n`;
+      mime += `Content-Type: audio/mpeg; name="${adminMp3File.name}"\r\n`;
+      mime += `Content-Disposition: attachment; filename="${adminMp3File.name}"\r\n`;
+      mime += `Content-Transfer-Encoding: base64\r\n\r\n`;
+      mime += `${wrapBase64(b64)}\r\n\r\n`;
+    }
+    mime += `--${boundary}--`;
+    const raw = utf8ToBase64Url(mime);
+    const res = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/send', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${gmailAccessToken}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ raw })
+    });
+    if(!res.ok) {
+      if(res.status === 401) { gmailAccessToken = null; const cbtn = document.getElementById('gmailConnectBtn'); if(cbtn) { cbtn.textContent = 'Connect Gmail (mason@masondouglasmusic.com)'; cbtn.classList.remove('success'); } }
+      const err = await res.json().catch(()=>({})); throw new Error(err.error?.message || `HTTP ${res.status}`);
+    }
+    statusEl.textContent = `✓ Sent to ${GMAIL_ADMIN_RECIPIENTS.join(', ')} at ${new Date().toLocaleTimeString()}`;
+    showToast(`✓ Sent "${song.title}" to admin`);
+  } catch(e) {
+    statusEl.textContent = `Send failed: ${e.message}`;
+    showToast(`Send failed: ${e.message}`, 'error');
+  } finally {
+    btn.textContent = '✉ Send to Admin';
+    updateSendAdminBtnState();
+  }
+}
 </script>
 </body>
 </html>
