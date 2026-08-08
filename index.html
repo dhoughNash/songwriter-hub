@@ -360,14 +360,14 @@ async function submitAuth() {
     </div>
     <div class="card">
       <div class="card-title">Email Admin &mdash; Mega Gusta Music</div>
-      <p style="font-size:13px;color:var(--ink-light);line-height:1.6;margin-bottom:1rem;">Some songs get registered directly by your admin instead of you exporting them yourself. This sends the writer &amp; publisher info for one song straight to Mega Gusta, from <strong>mason@masondouglasmusic.com</strong>, with the release MP3 attached if you add one below.</p>
+      <p style="font-size:13px;color:var(--ink-light);line-height:1.6;margin-bottom:1rem;">Some songs get registered directly by your admin instead of you exporting them yourself. This sends the writer &amp; publisher info for one song straight to Mega Gusta, from <strong>masondouglasmusic@gmail.com</strong>, with the release MP3 attached if you add one below.</p>
       <div class="field-grid">
         <div class="field full-width"><label>Song</label><select id="adminEmailSongPicker" onchange="onAdminEmailSongChange()"><option value="">Choose a song...</option></select></div>
         <div class="field full-width"><label>Release MP3 <span style="font-weight:400;text-transform:none;letter-spacing:0;">(optional)</span></label><input type="file" id="adminEmailMp3" accept="audio/mpeg,audio/mp3,.mp3" onchange="onAdminMp3Selected(this)"><span class="hint" id="adminMp3Info">No file attached</span></div>
       </div>
       <div class="preview-box" id="adminEmailPreview" style="display:none;margin-top:1rem;"></div>
       <div class="btn-row">
-        <button class="btn" id="gmailConnectBtn" onclick="connectAdminGmail()">Connect Gmail (mason@masondouglasmusic.com)</button>
+        <button class="btn" id="gmailConnectBtn" onclick="connectAdminGmail()">Connect Gmail (masondouglasmusic@gmail.com)</button>
         <button class="btn gold" id="sendAdminEmailBtn" onclick="sendAdminEmail()" disabled>&#9993; Send to Admin</button>
       </div>
       <p class="hint" style="margin-top:8px;">Sends to: trina@megustamusicadmin.com, tricia@megustamusicadmin.com. Requires a one-time Gmail connection &mdash; see Settings &amp; Sync for setup.</p>
@@ -460,7 +460,7 @@ async function submitAuth() {
     </div>
     <div class="card">
       <div class="card-title">Admin Email &mdash; Gmail API</div>
-      <p style="font-size:13px;color:var(--ink-light);line-height:1.6;margin-bottom:1rem;">Lets the &ldquo;Email Admin&rdquo; button on Export &amp; Submit send writer info straight to Mega Gusta from mason@masondouglasmusic.com, with the release MP3 attached. One-time setup below.</p>
+      <p style="font-size:13px;color:var(--ink-light);line-height:1.6;margin-bottom:1rem;">Lets the &ldquo;Email Admin&rdquo; button on Export &amp; Submit send writer info straight to Mega Gusta from masondouglasmusic@gmail.com, with the release MP3 attached. One-time setup below.</p>
       <div class="field-grid">
         <div class="field full-width"><label>Google OAuth Client ID</label><input type="text" id="gmailClientId" placeholder="xxxxxxxxxxxx.apps.googleusercontent.com" oninput="saveGmailAdminSettings()"><span class="hint">From Google Cloud Console &mdash; see setup steps below. This is a public identifier, safe to store here (not a secret).</span></div>
       </div>
@@ -469,15 +469,15 @@ async function submitAuth() {
     <div class="card">
       <div class="card-title">How to set up Admin Email sending (10 min, one time)</div>
       <ol style="font-size:13px;color:var(--ink-light);line-height:2;padding-left:1.25rem;">
-        <li>Go to <a href="https://console.cloud.google.com" target="_blank" style="color:var(--gold);">console.cloud.google.com</a> signed in as <strong>mason@masondouglasmusic.com</strong></li>
+        <li>Go to <a href="https://console.cloud.google.com" target="_blank" style="color:var(--gold);">console.cloud.google.com</a> signed in as <strong>masondouglasmusic@gmail.com</strong></li>
         <li><strong>Select a project &rarr; New Project</strong> &rarr; name it anything (e.g. &ldquo;SongVault Admin Mail&rdquo;) &rarr; Create</li>
         <li>Search <strong>Gmail API</strong> in the top search bar &rarr; click it &rarr; click <strong>Enable</strong></li>
         <li>Go to <strong>APIs &amp; Services &rarr; OAuth consent screen</strong>. Choose <strong>External</strong>, fill in the app name and your email, and save through the steps</li>
-        <li>On the <strong>Test users</strong> step, add <strong>mason@masondouglasmusic.com</strong> as a test user &mdash; this keeps the app in &ldquo;Testing&rdquo; mode, which is fine and needs no Google review</li>
+        <li>On the <strong>Test users</strong> step, add <strong>masondouglasmusic@gmail.com</strong> as a test user &mdash; this keeps the app in &ldquo;Testing&rdquo; mode, which is fine and needs no Google review</li>
         <li>Go to <strong>APIs &amp; Services &rarr; Credentials &rarr; + Create Credentials &rarr; OAuth client ID</strong>. Application type: <strong>Web application</strong></li>
         <li>Under <strong>Authorized JavaScript origins</strong>, add <code>https://dhoughnash.github.io</code> (this app's GitHub Pages domain)</li>
         <li>Click <strong>Create</strong>, copy the <strong>Client ID</strong>, and paste it above</li>
-        <li>Back on <strong>Export &amp; Submit</strong>, click <strong>Connect Gmail</strong> and sign in as mason@masondouglasmusic.com when prompted &mdash; then you can send</li>
+        <li>Back on <strong>Export &amp; Submit</strong>, click <strong>Connect Gmail</strong> and sign in as masondouglasmusic@gmail.com when prompted &mdash; then you can send</li>
       </ol>
     </div>
     <div class="card">
@@ -790,7 +790,7 @@ supabaseClient.auth.onAuthStateChange((event, session) => {
 })();
 
 // ---- Email Admin (Gmail API) ----
-const GMAIL_ADMIN_SENDER = 'mason@masondouglasmusic.com';
+const GMAIL_ADMIN_SENDER = 'masondouglasmusic@gmail.com';
 const GMAIL_ADMIN_RECIPIENTS = ['trina@megustamusicadmin.com', 'tricia@megustamusicadmin.com'];
 const GMAIL_SEND_SCOPE = 'https://www.googleapis.com/auth/gmail.send';
 let gmailAccessToken = null;
@@ -932,7 +932,7 @@ async function sendAdminEmail() {
       body: JSON.stringify({ raw })
     });
     if(!res.ok) {
-      if(res.status === 401) { gmailAccessToken = null; const cbtn = document.getElementById('gmailConnectBtn'); if(cbtn) { cbtn.textContent = 'Connect Gmail (mason@masondouglasmusic.com)'; cbtn.classList.remove('success'); } }
+      if(res.status === 401) { gmailAccessToken = null; const cbtn = document.getElementById('gmailConnectBtn'); if(cbtn) { cbtn.textContent = 'Connect Gmail (masondouglasmusic@gmail.com)'; cbtn.classList.remove('success'); } }
       const err = await res.json().catch(()=>({})); throw new Error(err.error?.message || `HTTP ${res.status}`);
     }
     statusEl.textContent = `✓ Sent to ${GMAIL_ADMIN_RECIPIENTS.join(', ')} at ${new Date().toLocaleTimeString()}`;
