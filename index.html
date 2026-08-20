@@ -496,7 +496,7 @@ function songToSupaRow(song) { return { title: song.title||'', alt_title: song.a
 async function loadSongsFromSupabase(silent=false) {
   try {
     if(!silent) showToast('Loading songs...', 'info'); const writerFilter = activeWriterId ? `&writer_id=eq.${activeWriterId}` : '';
-    const rows = await supaFetch(`/songs?order=updated_at.desc${writerFilter}`); songs = rows.map(rowToSong); localStorage.setItem('srh_songs', JSON.stringify(songs));
+    const rows = await supaFetch(`/songs?order=updated_at.desc&user_id=eq.${currentUser?.id}${writerFilter}`); songs = rows.map(rowToSong); localStorage.setItem('srh_songs', JSON.stringify(songs));
     await buildKnownCoWriters(); const vaultActive = document.getElementById('vault').classList.contains('active'); if(vaultActive || !silent) renderVault();
     const cowritersActive = document.getElementById('cowriters').classList.contains('active'); if(cowritersActive && !silent) { const idx = document.getElementById('outreachSongPicker').value; if(idx !== '') renderOutreach(); }
     if(!silent) showToast(`✓ Loaded ${songs.length} songs from database`);
@@ -518,7 +518,7 @@ let songs = JSON.parse(localStorage.getItem('srh_songs') || '[]');
 let selectedOrgs = new Set(['mlc','sesac']); let editingIndex = -1; let outreachModes = {}; let vaultSort = 'recent';
 let activeWriterId = localStorage.getItem('srh_activeWriter') || null; let writersList = []; let knownCoWriters = [];
 async function loadWriters() {
-  try { const all = await supaFetch('/writers?order=name.asc'); writersList = all.filter(w => w.active !== false); const picker = document.getElementById('writerPicker'); picker.innerHTML = writersList.map(w => `<option value="${w.id}">${w.name}</option>`).join(''); if(activeWriterId && writersList.find(w => w.id === activeWriterId)) { picker.value = activeWriterId; } else if(writersList.length > 0) { activeWriterId = writersList[0].id; picker.value = activeWriterId; localStorage.setItem('srh_activeWriter', activeWriterId); } applyActiveWriter(); renderManageWriters(all); }
+  try { const all = await supaFetch(`/writers?user_id=eq.${currentUser?.id}&order=name.asc`); writersList = all.filter(w => w.active !== false); const picker = document.getElementById('writerPicker'); picker.innerHTML = writersList.map(w => `<option value="${w.id}">${w.name}</option>`).join(''); if(activeWriterId && writersList.find(w => w.id === activeWriterId)) { picker.value = activeWriterId; } else if(writersList.length > 0) { activeWriterId = writersList[0].id; picker.value = activeWriterId; localStorage.setItem('srh_activeWriter', activeWriterId); } applyActiveWriter(); renderManageWriters(all); }
   catch(e) { console.warn('Could not load writers:', e.message); }
 }
 function toggleManageWriters() { const panel = document.getElementById('manageWritersPanel'); panel.style.display = panel.style.display === 'none' ? 'block' : 'none'; }
