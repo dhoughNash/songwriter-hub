@@ -126,6 +126,8 @@ select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmln
 .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 .toast.error { background: var(--rust); color: #fff; }
 .no-response-banner { background: var(--cream); border: 1px dashed var(--border-strong); border-radius: var(--radius); padding: 8px 14px; margin-bottom: 10px; font-size: 12px; color: var(--ink-muted); display: flex; align-items: center; gap: 8px; }
+.back-link { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; color: var(--ink-muted); text-decoration: none; margin-bottom: 12px; cursor: pointer; font-family: 'DM Sans', sans-serif; background: none; border: none; padding: 0; }
+.back-link:hover { color: var(--gold); }
 @media (max-width: 768px) {
   .header { padding: 0 1rem; } .header-right { display: none; } .logo span { display: none; } .logo { font-size: 16px; }
   .nav { padding: 0 0.5rem; gap: 0; -webkit-overflow-scrolling: touch; } .nav-tab { padding: 12px 14px; font-size: 12px; }
@@ -204,7 +206,8 @@ async function submitAuth() {
   <div style="display:flex;align-items:center;gap:10px;">
     <select id="writerPicker" onchange="switchWriter(this.value)" style="background:#2A2420;color:var(--gold);border:1px solid rgba(201,168,76,0.3);border-radius:4px;padding:5px 10px;font-size:13px;font-family:'DM Sans',sans-serif;cursor:pointer;max-width:180px;"><option value="">Loading...</option></select>
     <button onclick="showAddWriterModal()" title="Add writer" style="background:transparent;border:1px solid rgba(201,168,76,0.3);border-radius:4px;color:var(--gold);padding:5px 10px;cursor:pointer;font-size:16px;line-height:1;">+</button>
-    <button onclick="toggleManageWriters()" title="Manage writers" style="background:transparent;border:1px solid rgba(201,168,76,0.3);border-radius:4px;color:var(--gold);padding:5px 10px;cursor:pointer;font-size:12px;font-family:'DM Sans',sans-serif;white-space:nowrap;">&#9881; Manage</button>
+    <button onclick="toggleManageWriters()" title="Manage writers" style="background:transparent;border:1px solid rgba(201,168,76,0.3);border-radius:4px;color:var(--gold);padding:5px 10px;cursor:pointer;font-size:12px;font-family:'DM Sans',sans-serif;white-space:nowrap;">Manage</button>
+    <button onclick="showTab('settings')" title="Settings &amp; Sync" style="background:transparent;border:1px solid rgba(201,168,76,0.3);border-radius:4px;color:var(--gold);padding:5px 10px;cursor:pointer;font-size:14px;line-height:1;">&#9881;</button>
     <button onclick="signOutUser()" title="Sign out" style="background:transparent;border:1px solid rgba(201,168,76,0.3);border-radius:4px;color:var(--gold);padding:5px 10px;cursor:pointer;font-size:12px;font-family:'DM Sans',sans-serif;white-space:nowrap;">Sign Out</button>
   </div>
   <div class="header-right">Mason Douglas Music LLC</div>
@@ -226,13 +229,6 @@ async function submitAuth() {
   </div>
 </div>
 <div class="toast" id="toast"></div>
-<nav class="nav">
-  <button class="nav-tab active" onclick="showTab('vault')">Song Vault</button>
-  <button class="nav-tab" onclick="showTab('entry')">New Song</button>
-  <button class="nav-tab" onclick="showTab('cowriters')">Co-writer Outreach</button>
-  <button class="nav-tab" onclick="showTab('submit')">Export &amp; Submit</button>
-  <button class="nav-tab" onclick="showTab('settings')">&#9881; Settings &amp; Sync</button>
-</nav>
 <main class="main">
   <div id="vault" class="section active">
     <div class="page-header">
@@ -240,6 +236,7 @@ async function submitAuth() {
       <div style="display:flex;gap:8px;align-items:center;">
         <button class="btn" id="sortToggle" onclick="toggleVaultSort()" title="Toggle sort order">&#8645; Recent</button>
         <button class="btn" onclick="loadSongsFromSupabase()" title="Reload from database">&#8635; Reload</button>
+        <button class="btn" onclick="showTab('submit')" title="Export & submit registrations">&#8681; Export &amp; Submit</button>
         <button class="btn gold" onclick="showTab('entry');clearForm()">+ New Song</button>
       </div>
     </div>
@@ -250,6 +247,7 @@ async function submitAuth() {
     <div id="emptyVault" class="empty"><div class="empty-icon">&#9834;</div>No songs yet. Add your first to get started.</div>
   </div>
   <div id="entry" class="section">
+    <a class="back-link" onclick="showTab('vault')">&larr; Back to Song Vault</a>
     <div class="page-header"><div><div class="page-title">Song Entry</div><div class="page-sub">Enter once &mdash; use everywhere</div></div></div>
     <div class="card">
       <div class="card-title">Song Basics</div>
@@ -298,13 +296,14 @@ async function submitAuth() {
     </div>
     <div class="btn-row">
       <button class="btn gold" onclick="saveSong()">Save to Vault</button>
-      <button class="btn" onclick="showTab('cowriters')">Invite Co-writers &rarr;</button>
+      <button class="btn" onclick="inviteCoWritersForCurrentSong()">Invite Co-writers &rarr;</button>
       <button class="btn" onclick="emailSongInfo()">&#9993; Email song info</button>
       <button class="btn" onclick="showTab('submit')">Preview Export &rarr;</button>
       <button class="btn" style="color:var(--rust);border-color:var(--rust);" onclick="deleteSong()">&#128465; Delete song</button>
     </div>
   </div>
   <div id="cowriters" class="section">
+    <a class="back-link" onclick="showTab('vault')">&larr; Back to Song Vault</a>
     <div class="page-header"><div><div class="page-title">Co-writer Outreach</div><div class="page-sub">Send a link &mdash; they fill in their own info</div></div></div>
     <div class="form-url-banner">
       <div class="form-url-label">Your Google Form URL:</div>
@@ -326,6 +325,7 @@ async function submitAuth() {
     <div id="outreachEmpty" class="empty"><div class="empty-icon">&#9993;</div>Select a song above to manage outreach.</div>
   </div>
   <div id="submit" class="section">
+    <a class="back-link" onclick="showTab('vault')">&larr; Back to Song Vault</a>
     <div class="page-header"><div><div class="page-title">Export &amp; Submit</div><div class="page-sub">Formatted for each organization</div></div></div>
     <div class="card">
       <div class="card-title">The MLC Bulk Registration Export</div>
@@ -371,6 +371,7 @@ async function submitAuth() {
     </div>
   </div>
   <div id="settings" class="section">
+    <a class="back-link" onclick="showTab('vault')">&larr; Back to Song Vault</a>
     <div class="page-header"><div><div class="page-title">Settings &amp; Sync</div><div class="page-sub">Connect your Google Sheet to pull co-writer responses</div></div></div>
     <div class="card">
       <div class="card-title">&#9729; Supabase Database</div>
@@ -564,7 +565,7 @@ function saveMyInfo() { saveAllSettings(); } function loadMyInfo() { applySettin
 function getMyInfo() { const s = JSON.parse(localStorage.getItem('srh_settings') || '{}'); return { name: s.my_name||'', ipi: s.my_ipi||'', pro: s.my_pro||'', pct: s.my_pct||'', pub_name: s.my_pub_name||'', pub_ipi: s.my_pub_ipi||'', pub_pro: s.my_pub_pro||'', genre: s.my_genre||'', language: s.my_language||'English', distributor: s.my_distributor||'', label: s.my_label||'', artist: s.my_artist||'', sesac_account: s.my_sesac_account||'958353' }; }
 function showSavedInfo() { const el = document.getElementById('myInfoSaved'); el.style.display = 'block'; setTimeout(() => el.style.display = 'none', 3000); }
 function showTab(t) {
-  const tabs = ['vault','entry','cowriters','submit','settings']; document.querySelectorAll('.nav-tab').forEach((el,i) => el.classList.toggle('active', tabs[i]===t)); document.querySelectorAll('.section').forEach(s => s.classList.remove('active')); document.getElementById(t).classList.add('active');
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active')); document.getElementById(t).classList.add('active'); window.scrollTo({top:0,behavior:'instant'});
   if(t==='vault') renderVault(); if(t==='submit') { refreshPreview(); populateAdminEmailPicker(); } if(t==='cowriters') { loadFormUrl(); populatePicker('outreachSongPicker'); renderOutreach(); } if(t==='settings') { loadAllSettings(); }
 }
 function addWriter(data) {
@@ -664,7 +665,7 @@ function renderVault() {
     const leftDiv=document.createElement('div'); leftDiv.style.flex='1'; leftDiv.style.cursor='pointer'; leftDiv.onclick=()=>loadSong(i);
     leftDiv.innerHTML=`<div class="song-title-text">${s.title}</div><div class="song-meta">${s.artist||'No artist'}${s.genre?' · '+s.genre:''}</div>`;
     const rightDiv=document.createElement('div'); rightDiv.style.cssText='display:flex;align-items:center;gap:8px;flex-wrap:wrap;';
-    rightDiv.innerHTML=`<div class="badges">${totalCo>0?`<span class="badge ${responded===totalCo?'responded':responded>0?'invited':'pending'}">${responded}/${totalCo} co-writers</span>`:''}</div><div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;"><button class="btn${adminSubmitted?' success':''}" style="font-size:11px;padding:5px 10px;flex-shrink:0;width:88px;text-align:center;" onclick="event.stopPropagation();toggleAdminSubmitted(${i})">${adminSubmitted?'Admin ✓':'Mark Admin'}</button><button class="btn${sesacSubmitted?' success':''}" style="font-size:11px;padding:5px 10px;flex-shrink:0;width:88px;text-align:center;" onclick="event.stopPropagation();toggleSesacSubmitted(${i})">${sesacSubmitted?'SESAC ✓':'Mark SESAC'}</button><button class="btn${mlcSubmitted?' success':''}" style="font-size:11px;padding:5px 10px;flex-shrink:0;width:88px;text-align:center;" onclick="event.stopPropagation();toggleMlcSubmitted(${i})">${mlcSubmitted?'MLC ✓':'Mark MLC'}</button><button class="btn" style="font-size:11px;padding:5px 10px;flex-shrink:0;width:88px;text-align:center;" onclick="event.stopPropagation();duplicateSong(${i})">⧉ Duplicate</button><button class="btn" style="font-size:12px;padding:5px 7px;flex-shrink:0;margin-left:4px;" onclick="event.stopPropagation();copyPrefilledLink('${s.title.replace(/\\/g,'\\\\').replace(/'/g,"\\'")}',this)" title="Copy pre-filled form link">📋</button></div>`;
+    rightDiv.innerHTML=`<div class="badges">${totalCo>0?`<span class="badge ${responded===totalCo?'responded':responded>0?'invited':'pending'}">${responded}/${totalCo} co-writers</span>`:''}</div><div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;"><button class="btn" style="font-size:11px;padding:5px 10px;flex-shrink:0;width:88px;text-align:center;" onclick="event.stopPropagation();openOutreachForSong(${i})" title="Manage co-writer outreach for this song">&#9993; Outreach</button><button class="btn${adminSubmitted?' success':''}" style="font-size:11px;padding:5px 10px;flex-shrink:0;width:88px;text-align:center;" onclick="event.stopPropagation();toggleAdminSubmitted(${i})">${adminSubmitted?'Admin ✓':'Mark Admin'}</button><button class="btn${sesacSubmitted?' success':''}" style="font-size:11px;padding:5px 10px;flex-shrink:0;width:88px;text-align:center;" onclick="event.stopPropagation();toggleSesacSubmitted(${i})">${sesacSubmitted?'SESAC ✓':'Mark SESAC'}</button><button class="btn${mlcSubmitted?' success':''}" style="font-size:11px;padding:5px 10px;flex-shrink:0;width:88px;text-align:center;" onclick="event.stopPropagation();toggleMlcSubmitted(${i})">${mlcSubmitted?'MLC ✓':'Mark MLC'}</button><button class="btn" style="font-size:11px;padding:5px 10px;flex-shrink:0;width:88px;text-align:center;" onclick="event.stopPropagation();duplicateSong(${i})">⧉ Duplicate</button><button class="btn" style="font-size:12px;padding:5px 7px;flex-shrink:0;margin-left:4px;" onclick="event.stopPropagation();copyPrefilledLink('${s.title.replace(/\\/g,'\\\\').replace(/'/g,"\\'")}',this)" title="Copy pre-filled form link">📋</button></div>`;
     row.appendChild(leftDiv); row.appendChild(rightDiv); list.appendChild(row);
   });
 }
@@ -675,6 +676,8 @@ async function toggleAdminSubmitted(i) { if(!songs[i].registrations) songs[i].re
 function populatePicker(id) { const sel=document.getElementById(id); const cur=sel.value; sel.innerHTML='<option value="">Choose a song...</option>'; songs.forEach((s,i)=>{const o=document.createElement('option');o.value=i;o.textContent=s.title;sel.appendChild(o);}); if(cur!=='')sel.value=cur; }
 function getInitials(name){return(name||'?').split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2);}
 function formatPhoneUS(p){ const d=(p||'').replace(/\D/g,''); const ten=d.length===11&&d.startsWith('1')?d.slice(1):d; if(ten.length!==10)return p||''; return `(${ten.slice(0,3)})${ten.slice(3,6)}-${ten.slice(6)}`; }
+function openOutreachForSong(idx) { showTab('cowriters'); const picker = document.getElementById('outreachSongPicker'); picker.value = idx; renderOutreach(); }
+function inviteCoWritersForCurrentSong() { if(editingIndex < 0) { showToast('Save the song first, then invite co-writers.', 'error'); return; } openOutreachForSong(editingIndex); }
 function renderOutreach() {
   const idx=document.getElementById('outreachSongPicker').value; const content=document.getElementById('outreachContent'); const empty=document.getElementById('outreachEmpty');
   if(idx===''){content.style.display='none';empty.style.display='block';return;} content.style.display='block'; empty.style.display='none';
