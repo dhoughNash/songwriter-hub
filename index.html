@@ -740,6 +740,21 @@ function formatExport(s){ if(!s)return'Select a song to see formatted output...'
 function refreshPreview(){ const idx=document.getElementById('exportSongPicker')?.value; if(!idx) return; document.getElementById('previewBox').textContent=formatExport(idx!==''?songs[parseInt(idx)]:null); const hasSelection = idx !== ''; const selBtn=document.getElementById('sesacSelectedBtn'); if(selBtn) selBtn.style.display=hasSelection?'inline-flex':'none'; }
 function exportSESACSelected() { const idx=document.getElementById('exportSongPicker')?.value; if(!idx || idx===''){alert('Please select a song first.');return;} exportSESAC([parseInt(idx)]); }
 function copyExport(){ copyText(document.getElementById('previewBox').textContent,event.target); }
+let currentSubscription = null;
+async function ensureSubscriptionRow() {
+  if(!currentUser?.id) return null;
+  try {
+    const rows = await supaFetch(`/subscriptions?user_id=eq.${currentUser.id}&limit=1`);
+    if(rows && rows.length) { currentSubscription = rows[0]; return currentSubscription; }
+    const inserted = await supaFetch('/subscriptions', { method: 'POST', body: JSON.stringify({ user_id: currentUser.id, status: 'inactive' }) });
+    currentSubscription = (inserted && inserted[0]) || { user_id: currentUser.id, status: 'inactive' };
+    return currentSubscription;
+  } catch(e) {
+    console.warn('Subscription bootstrap failed:', e.message);
+    currentSubscription = null;
+    return null;
+  }
+}
 let appStarted = false;
 async function startApp() {
   if(appStarted) return; appStarted = true;
@@ -747,6 +762,7 @@ async function startApp() {
   clearForm();
   loadAllSettings().then(() => { clearForm(); });
   loadWriters().then(() => loadSongsFromSupabase());
+  ensureSubscriptionRow();
   setInterval(() => { loadSongsFromSupabase(true); }, 3 * 60 * 1000);
 }
 async function onAuthReady(session) {
