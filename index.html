@@ -232,7 +232,7 @@ async function submitAuth() {
 <main class="main">
   <div id="vault" class="section active">
     <div class="page-header">
-      <div><div class="page-title">Song Vault</div><div class="page-sub">Your registered catalog</div></div>
+      <div><div class="page-title">Song Vault</div><div class="page-sub" id="vaultPageSub">Your registered catalog</div></div>
       <div style="display:flex;gap:8px;align-items:center;">
         <button class="btn" id="sortToggle" onclick="toggleVaultSort()" title="Toggle sort order">&#8645; Recent</button>
         <button class="btn" onclick="loadSongsFromSupabase()" title="Reload from database">&#8635; Reload</button>
@@ -658,10 +658,12 @@ function clearForm() {
 }
 function getSongData() { return { title:document.getElementById('songTitle').value, altTitle:document.getElementById('altTitle').value, iswc:document.getElementById('iswc').value, duration:document.getElementById('duration').value, genre:document.getElementById('genre').value, language:document.getElementById('language').value, releaseDate:document.getElementById('releaseDate').value, upc:document.getElementById('upc').value, isrc:document.getElementById('isrc').value, artist:document.getElementById('artist').value, album:document.getElementById('album').value, label:document.getElementById('label').value, distributor:document.getElementById('distributor').value, lyrics:document.getElementById('lyrics').value, bpm:document.getElementById('bpm').value, key:document.getElementById('key').value, instrumentation:document.getElementById('instrumentation').value, mood:document.getElementById('mood').value, writers:(()=>{ const wRows=[...(document.querySelectorAll('#writersContainer .writer-row')||[])]; const pRows=[...(document.querySelectorAll('#publishersContainer .writer-row')||[])]; return wRows.map((r,i)=>({ name:r.querySelector('.w-name').value, ipi:r.querySelector('.w-ipi').value, pro:r.querySelector('.w-pro').value, pct:r.querySelector('.w-pct').value, pub_name:pRows[i]?pRows[i].querySelector('.p-name').value:'', pub_ipi:pRows[i]?pRows[i].querySelector('.p-ipi').value:'', pub_pro:pRows[i]?pRows[i].querySelector('.p-pro').value:'' })); })(), publishers:[...(document.querySelectorAll('#publishersContainer .writer-row')||[])].map(r=>({name:r.querySelector('.p-name').value,ipi:r.querySelector('.p-ipi').value,pro:r.querySelector('.p-pro').value,pct:r.querySelector('.p-pct').value,writer:r.querySelector('.p-writer')?.value||''})), registrations: editingIndex >= 0 ? (songs[editingIndex].registrations || {}) : {}, outreach: editingIndex >= 0 ? (songs[editingIndex].outreach || {}) : {} }; }
 async function deleteSong() { if(editingIndex < 0) { alert('No song selected.'); return; } const song = songs[editingIndex]; if(!confirm(`Delete "${song.title}" permanently? This cannot be undone.`)) return; try { if(song._id) await supaFetch(`/songs?id=eq.${song._id}`, { method: 'DELETE' }); songs.splice(editingIndex, 1); localStorage.setItem('srh_songs', JSON.stringify(songs)); editingIndex = -1; showToast(`✓ "${song.title}" deleted`); showTab('vault'); } catch(e) { alert('Delete failed: ' + e.message); } }
-async function saveSong() { const d = getSongData(); if(!d.title.trim()){alert('Please enter a song title.');return;} if(pendingRespondedWriters.size){ d.outreach = d.outreach || {}; (d.writers||[]).forEach((w,i) => { if(i>0 && w.name && pendingRespondedWriters.has(w.name)) { d.outreach[w.name] = { ...(d.outreach[w.name]||{}), status: 'responded' }; } }); pendingRespondedWriters.clear(); } if(editingIndex>=0){ songs[editingIndex]={...songs[editingIndex],...d,outreach:songs[editingIndex].outreach||{}}; await saveSongToSupabase(songs[editingIndex]); } else { songs.push(d); await saveSongToSupabase(songs[songs.length-1]); } localStorage.setItem('srh_songs',JSON.stringify(songs)); showToast(`✓ "${d.title}" saved`); showTab('vault'); }
+async function saveSong() { const d = getSongData(); if(!d.title.trim()){alert('Please enter a song title.');return;} if(editingIndex<0 && songs.length>=getSongLimit()){ showUpgradePrompt(); return; } if(pendingRespondedWriters.size){ d.outreach = d.outreach || {}; (d.writers||[]).forEach((w,i) => { if(i>0 && w.name && pendingRespondedWriters.has(w.name)) { d.outreach[w.name] = { ...(d.outreach[w.name]||{}), status: 'responded' }; } }); pendingRespondedWriters.clear(); } if(editingIndex>=0){ songs[editingIndex]={...songs[editingIndex],...d,outreach:songs[editingIndex].outreach||{}}; await saveSongToSupabase(songs[editingIndex]); } else { songs.push(d); await saveSongToSupabase(songs[songs.length-1]); } localStorage.setItem('srh_songs',JSON.stringify(songs)); showToast(`✓ "${d.title}" saved`); showTab('vault'); }
 function loadSong(idx) { editingIndex=idx; pendingRespondedWriters.clear(); const s=songs[idx]; const map={songTitle:'title',altTitle:'altTitle',iswc:'iswc',duration:'duration',releaseDate:'releaseDate',upc:'upc',isrc:'isrc',artist:'artist',album:'album',label:'label',distributor:'distributor',lyrics:'lyrics',bpm:'bpm',key:'key',instrumentation:'instrumentation',mood:'mood',genre:'genre',language:'language'}; Object.entries(map).forEach(([id,k])=>{const el=document.getElementById(id);if(el&&s[k]!==undefined)el.value=s[k];}); document.getElementById('writersContainer').innerHTML=''; document.getElementById('publishersContainer').innerHTML=''; (s.writers||[]).forEach(w=>addWriter(w)); (s.publishers||[]).forEach(p=>addPublisher(p)); calcPct(); showTab('entry'); }
 function toggleVaultSort() { vaultSort = vaultSort === 'recent' ? 'alpha' : 'recent'; const btn = document.getElementById('sortToggle'); if(btn) btn.textContent = vaultSort === 'alpha' ? '⇅ A→Z' : '⇅ Recent'; renderVault(); }
 function renderVault() {
+  const subEl = document.getElementById('vaultPageSub');
+  if(subEl) { if(hasActiveAccess()) { subEl.textContent = 'Your registered catalog'; } else { const limit = getSongLimit(); subEl.innerHTML = `Your registered catalog &mdash; ${songs.length}/${limit} free songs used <a href="#" onclick="showTab('settings');return false;" style="color:var(--gold);">Subscribe for unlimited &rarr;</a>`; } }
   const list=document.getElementById('songsList'); const empty=document.getElementById('emptyVault'); list.innerHTML=''; if(!songs.length){empty.style.display='block';return;} empty.style.display='none';
   const indexed = songs.map((s,i) => ({s, i})); if(vaultSort === 'alpha') { indexed.sort((a,b) => a.s.title.localeCompare(b.s.title)); }
   indexed.forEach(({s,i})=>{
@@ -751,10 +753,27 @@ function refreshPreview(){ const idx=document.getElementById('exportSongPicker')
 function exportSESACSelected() { const idx=document.getElementById('exportSongPicker')?.value; if(!idx || idx===''){alert('Please select a song first.');return;} exportSESAC([parseInt(idx)]); }
 function copyExport(){ copyText(document.getElementById('previewBox').textContent,event.target); }
 const STRIPE_PAYMENT_LINK = 'https://buy.stripe.com/fZucN71NufXxdox52T9R606';
+const OWNER_EMAIL = 'masondouglasmusic@gmail.com';
+const FREE_SONG_LIMIT = 5;
 let currentSubscription = null;
+function hasActiveAccess() {
+  if((currentUser?.email || '').toLowerCase() === OWNER_EMAIL) return true;
+  return currentSubscription?.status === 'active';
+}
+function getSongLimit() {
+  if(hasActiveAccess()) return Infinity;
+  const limit = currentSubscription?.usage_limit;
+  return (limit === null || limit === undefined) ? FREE_SONG_LIMIT : limit;
+}
 function openSubscribeLink() {
   if(!currentUser?.id) { showToast('Please sign in first', 'error'); return; }
   window.open(`${STRIPE_PAYMENT_LINK}?client_reference_id=${currentUser.id}`, '_blank');
+}
+function showUpgradePrompt() {
+  const limit = getSongLimit();
+  if(confirm(`You've reached the free limit of ${limit} songs in your vault. Subscribe for unlimited songs?\n\nClick OK to go to Settings and subscribe now.`)) {
+    showTab('settings');
+  }
 }
 function renderSubscriptionStatus() {
   const el = document.getElementById('subStatusDisplay');
@@ -784,8 +803,8 @@ async function ensureSubscriptionRow() {
   try {
     const rows = await supaFetch(`/subscriptions?user_id=eq.${currentUser.id}&limit=1`);
     if(rows && rows.length) { currentSubscription = rows[0]; return currentSubscription; }
-    const inserted = await supaFetch('/subscriptions', { method: 'POST', body: JSON.stringify({ user_id: currentUser.id, status: 'inactive' }) });
-    currentSubscription = (inserted && inserted[0]) || { user_id: currentUser.id, status: 'inactive' };
+    const inserted = await supaFetch('/subscriptions', { method: 'POST', body: JSON.stringify({ user_id: currentUser.id, status: 'inactive', usage_limit: FREE_SONG_LIMIT }) });
+    currentSubscription = (inserted && inserted[0]) || { user_id: currentUser.id, status: 'inactive', usage_limit: FREE_SONG_LIMIT };
     return currentSubscription;
   } catch(e) {
     console.warn('Subscription bootstrap failed:', e.message);
@@ -800,7 +819,7 @@ async function startApp() {
   clearForm();
   loadAllSettings().then(() => { clearForm(); });
   loadWriters().then(() => loadSongsFromSupabase());
-  ensureSubscriptionRow().then(renderSubscriptionStatus);
+  ensureSubscriptionRow().then(() => { renderSubscriptionStatus(); if(document.getElementById('vault').classList.contains('active')) renderVault(); });
   setInterval(() => { loadSongsFromSupabase(true); }, 3 * 60 * 1000);
 }
 async function onAuthReady(session) {
