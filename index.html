@@ -383,6 +383,16 @@ async function submitAuth() {
       <div id="supaStatus" class="hint" style="margin-top:8px;">Connected to ydxriywpkkdptwcuqaaj.supabase.co</div>
     </div>
     <div class="card">
+      <div class="card-title">Subscription</div>
+      <div id="subStatusDisplay" style="margin-bottom:1rem;">
+        <span class="badge none">Checking status...</span>
+      </div>
+      <div class="btn-row" style="margin-top:0;">
+        <button class="btn gold" id="subscribeBtn" onclick="openSubscribeLink()" style="display:none;">Subscribe</button>
+        <button class="btn" onclick="refreshSubscriptionStatus(true)">&#8635; I just subscribed &mdash; check again</button>
+      </div>
+    </div>
+    <div class="card">
       <div class="card-title">My Default Info</div>
       <p style="font-size:13px;color:var(--ink-light);line-height:1.6;margin-bottom:1rem;">Saved once &mdash; auto-fills every new song entry so you never retype your own details.</p>
       <div class="field-grid">
@@ -566,7 +576,7 @@ function getMyInfo() { const s = JSON.parse(localStorage.getItem('srh_settings')
 function showSavedInfo() { const el = document.getElementById('myInfoSaved'); el.style.display = 'block'; setTimeout(() => el.style.display = 'none', 3000); }
 function showTab(t) {
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active')); document.getElementById(t).classList.add('active'); window.scrollTo({top:0,behavior:'instant'});
-  if(t==='vault') renderVault(); if(t==='submit') { refreshPreview(); populateAdminEmailPicker(); } if(t==='cowriters') { loadFormUrl(); populatePicker('outreachSongPicker'); renderOutreach(); } if(t==='settings') { loadAllSettings(); }
+  if(t==='vault') renderVault(); if(t==='submit') { refreshPreview(); populateAdminEmailPicker(); } if(t==='cowriters') { loadFormUrl(); populatePicker('outreachSongPicker'); renderOutreach(); } if(t==='settings') { loadAllSettings(); renderSubscriptionStatus(); }
 }
 function addWriter(data) {
   const c = document.getElementById('writersContainer'); const d = document.createElement('div'); d.className = 'writer-row';
@@ -740,7 +750,35 @@ function formatExport(s){ if(!s)return'Select a song to see formatted output...'
 function refreshPreview(){ const idx=document.getElementById('exportSongPicker')?.value; if(!idx) return; document.getElementById('previewBox').textContent=formatExport(idx!==''?songs[parseInt(idx)]:null); const hasSelection = idx !== ''; const selBtn=document.getElementById('sesacSelectedBtn'); if(selBtn) selBtn.style.display=hasSelection?'inline-flex':'none'; }
 function exportSESACSelected() { const idx=document.getElementById('exportSongPicker')?.value; if(!idx || idx===''){alert('Please select a song first.');return;} exportSESAC([parseInt(idx)]); }
 function copyExport(){ copyText(document.getElementById('previewBox').textContent,event.target); }
+const STRIPE_PAYMENT_LINK = 'https://buy.stripe.com/fZucN71NufXxdox52T9R606';
 let currentSubscription = null;
+function openSubscribeLink() {
+  if(!currentUser?.id) { showToast('Please sign in first', 'error'); return; }
+  window.open(`${STRIPE_PAYMENT_LINK}?client_reference_id=${currentUser.id}`, '_blank');
+}
+function renderSubscriptionStatus() {
+  const el = document.getElementById('subStatusDisplay');
+  const btn = document.getElementById('subscribeBtn');
+  if(!el) return;
+  const status = currentSubscription?.status;
+  if(status === 'active') {
+    const tier = currentSubscription.tier ? ` (${currentSubscription.tier})` : '';
+    el.innerHTML = `<span class="badge registered">&#10003; Active${tier}</span>`;
+    if(btn) btn.style.display = 'none';
+  } else {
+    el.innerHTML = `<span class="badge pending">Not subscribed</span>`;
+    if(btn) btn.style.display = 'inline-flex';
+  }
+}
+async function refreshSubscriptionStatus(showFeedback) {
+  const result = await ensureSubscriptionRow();
+  renderSubscriptionStatus();
+  if(showFeedback) {
+    if(result?.status === 'active') showToast('\u2713 Subscription is active!');
+    else showToast('No active subscription found yet \u2014 payments can take a minute to process.', 'error');
+  }
+  return result;
+}
 async function ensureSubscriptionRow() {
   if(!currentUser?.id) return null;
   try {
@@ -762,7 +800,7 @@ async function startApp() {
   clearForm();
   loadAllSettings().then(() => { clearForm(); });
   loadWriters().then(() => loadSongsFromSupabase());
-  ensureSubscriptionRow();
+  ensureSubscriptionRow().then(renderSubscriptionStatus);
   setInterval(() => { loadSongsFromSupabase(true); }, 3 * 60 * 1000);
 }
 async function onAuthReady(session) {
