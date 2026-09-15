@@ -167,6 +167,35 @@ select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmln
     </div>
   </div>
 </div>
+<div id="publicSubmitView" style="display:none;min-height:100vh;align-items:center;justify-content:center;padding:2rem 1rem;background:var(--cream);">
+  <div style="max-width:440px;width:100%;background:var(--warm-white);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow-lg);padding:2rem;">
+    <div style="font-family:'Playfair Display',serif;font-size:20px;color:var(--ink);margin-bottom:4px;">Writer Info</div>
+    <div style="font-size:13px;color:var(--ink-muted);margin-bottom:1.5rem;">for &ldquo;<span id="publicSongTitle"></span>&rdquo;</div>
+    <div id="publicFormFields">
+      <div class="field" style="margin-bottom:12px;"><label>Your Full Legal Name <span class="req">*</span></label><input type="text" id="pub_name" placeholder="Full legal name"></div>
+      <div class="field-grid" style="margin-bottom:12px;">
+        <div class="field"><label>IPI / CAE #</label><input type="text" id="pub_ipi" placeholder="IPI #"></div>
+        <div class="field"><label>Your PRO</label><select id="pub_pro"><option value="">Select...</option><option>SESAC</option><option>ASCAP</option><option>BMI</option><option>GMR</option><option>None</option></select></div>
+      </div>
+      <div class="field" style="margin-bottom:12px;"><label>Your Share % (if you know it)</label><input type="number" id="pub_pct" placeholder="e.g. 50" min="0" max="100"></div>
+      <div class="field-grid" style="margin-bottom:12px;">
+        <div class="field"><label>Your Publisher (if any)</label><input type="text" id="pub_pubname" placeholder="Publisher name"></div>
+        <div class="field"><label>Publisher IPI #</label><input type="text" id="pub_pubipi" placeholder="Publisher IPI #"></div>
+      </div>
+      <div class="field" style="margin-bottom:12px;"><label>Publisher PRO</label><select id="pub_pubpro"><option value="">Select...</option><option>SESAC</option><option>ASCAP</option><option>BMI</option><option>None</option></select></div>
+      <div class="field-grid" style="margin-bottom:16px;">
+        <div class="field"><label>Email</label><input type="email" id="pub_email" placeholder="your@email.com"></div>
+        <div class="field"><label>Phone</label><input type="tel" id="pub_phone" placeholder="(615) 000-0000"></div>
+      </div>
+      <button class="btn gold" style="width:100%;padding:12px;font-size:14px;" onclick="submitPublicCoWriterInfo()">Submit My Info</button>
+      <div id="publicFormError" style="color:var(--rust);font-size:12px;margin-top:10px;display:none;"></div>
+    </div>
+    <div id="publicFormThanks" style="display:none;text-align:center;padding:1rem 0;">
+      <div style="font-size:32px;margin-bottom:10px;">&#10003;</div>
+      <div style="font-size:15px;color:var(--ink);">Thanks &mdash; your info's been sent!</div>
+    </div>
+  </div>
+</div>
 <script>
 let authMode = 'signin';
 function toggleAuthMode() {
@@ -207,7 +236,7 @@ async function submitAuth() {
     <select id="writerPicker" onchange="switchWriter(this.value)" style="background:#2A2420;color:var(--gold);border:1px solid rgba(201,168,76,0.3);border-radius:4px;padding:5px 10px;font-size:13px;font-family:'DM Sans',sans-serif;cursor:pointer;max-width:180px;"><option value="">Loading...</option></select>
     <button onclick="showAddWriterModal()" title="Add writer" style="background:transparent;border:1px solid rgba(201,168,76,0.3);border-radius:4px;color:var(--gold);padding:5px 10px;cursor:pointer;font-size:16px;line-height:1;">+</button>
     <button onclick="toggleManageWriters()" title="Manage writers" style="background:transparent;border:1px solid rgba(201,168,76,0.3);border-radius:4px;color:var(--gold);padding:5px 10px;cursor:pointer;font-size:12px;font-family:'DM Sans',sans-serif;white-space:nowrap;">Manage</button>
-    <button onclick="showTab('settings')" title="Settings &amp; Sync" style="background:transparent;border:1px solid rgba(201,168,76,0.3);border-radius:4px;color:var(--gold);padding:5px 10px;cursor:pointer;font-size:14px;line-height:1;">&#9881;</button>
+    <button onclick="showTab('settings')" title="Settings &amp; Sync" style="background:transparent;border:1px solid rgba(201,168,76,0.3);border-radius:4px;color:var(--gold);padding:5px 10px;cursor:pointer;font-size:14px;line-height:1;">&#9881;<span id="settingsPendingBadge" style="font-size:11px;font-family:'DM Sans',sans-serif;"></span></button>
     <button onclick="signOutUser()" title="Sign out" style="background:transparent;border:1px solid rgba(201,168,76,0.3);border-radius:4px;color:var(--gold);padding:5px 10px;cursor:pointer;font-size:12px;font-family:'DM Sans',sans-serif;white-space:nowrap;">Sign Out</button>
   </div>
   <div class="header-right">Mason Douglas Music LLC</div>
@@ -305,6 +334,10 @@ async function submitAuth() {
   <div id="cowriters" class="section">
     <a class="back-link" onclick="showTab('vault')">&larr; Back to Song Vault</a>
     <div class="page-header"><div><div class="page-title">Co-writer Outreach</div><div class="page-sub">Send a link &mdash; they fill in their own info</div></div></div>
+    <div class="method-pills" style="margin-bottom:1rem;">
+      <button class="mpill active" id="linkModeSheetBtn" onclick="setOutreachLinkMode('sheet')">Google Form</button>
+      <button class="mpill" id="linkModeAppBtn" onclick="setOutreachLinkMode('app')">In-App Form (Beta)</button>
+    </div>
     <div class="form-url-banner">
       <div class="form-url-label">Your Google Form URL:</div>
       <input type="text" id="formUrl" placeholder="Paste your Google Form link here..." oninput="saveFormUrl()">
@@ -319,7 +352,7 @@ async function submitAuth() {
       <div class="card" style="margin-top:0.5rem;">
         <div class="card-title">General Shareable Link</div>
         <div class="link-box"><span id="globalLink">&mdash;</span><button class="btn" style="flex-shrink:0;padding:6px 12px;font-size:12px;" onclick="copyText(document.getElementById('globalLink').textContent,this)">Copy</button></div>
-        <p class="hint">Share this link via text, email, DM, or any channel. Co-writers fill out their own info and it goes straight to your Google Sheet.</p>
+        <p class="hint">Share this link via text, email, DM, or any channel. Co-writers fill out their own info and it goes straight into whichever system is selected above &mdash; Google Sheet, or directly into your vault's Pending Submissions.</p>
       </div>
     </div>
     <div id="outreachEmpty" class="empty"><div class="empty-icon">&#9993;</div>Select a song above to manage outreach.</div>
@@ -425,6 +458,14 @@ async function submitAuth() {
       <p class="hint" style="margin-top:10px;">Export saves a <code>.json</code> file to your Downloads. Import merges it back in &mdash; your local data always wins in conflicts.</p>
     </div>
     <div class="card">
+      <div class="card-title">&#128229; In-App Co-writer Submissions <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--gold);">(New)</span></div>
+      <p style="font-size:13px;color:var(--ink-light);line-height:1.6;margin-bottom:1rem;">Co-writers can fill out their info right in the app instead of a Google Form &mdash; it lands here for you to review and merge in, no spreadsheet involved. This runs alongside your Google Form setup below; use whichever link you want per song from the Co-writer Outreach page.</p>
+      <div id="pendingSubmissionsList"><div class="hint">No pending submissions.</div></div>
+      <div class="btn-row" style="margin-top:1rem;">
+        <button class="btn" onclick="loadPendingSubmissions()">&#8635; Refresh</button>
+      </div>
+    </div>
+    <div class="card">
       <div class="card-title">Google Sheets Connection</div>
       <div class="field-grid">
         <div class="field full-width"><label>Google Sheet ID</label><input type="text" id="sheetId" placeholder="e.g. 18wjPuoozuLmy0Z4BfMqk2HKkhqj87zgfr6XTSKOiqyo" oninput="saveSettings()"><span class="hint">Found in your Sheet's URL: docs.google.com/spreadsheets/d/<strong>[THIS PART]</strong>/edit</span></div>
@@ -475,6 +516,11 @@ async function submitAuth() {
 const SUPA_URL = 'https://ydxriywpkkdptwcuqaaj.supabase.co/rest/v1';
 const SUPA_PROJECT_URL = 'https://ydxriywpkkdptwcuqaaj.supabase.co';
 const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlkeHJpeXdwa2tkcHR3Y3VxYWFqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1Njc5NjYsImV4cCI6MjA5NDE0Mzk2Nn0.SYACMatBKKEZV0Wo3rJ6iPSzt0E14qXjT2DieUsG9Zk';
+const _cwParams = new URLSearchParams(window.location.search);
+const PUBLIC_SONG_ID = _cwParams.get('cw_song');
+const PUBLIC_OWNER_ID = _cwParams.get('cw_owner');
+const PUBLIC_SONG_TITLE = _cwParams.get('cw_title') || '';
+const IS_PUBLIC_SUBMIT_VIEW = !!(PUBLIC_SONG_ID && PUBLIC_OWNER_ID);
 const supabaseClient = window.supabase.createClient(SUPA_PROJECT_URL, SUPA_KEY);
 let currentUser = null;
 let currentSession = null;
@@ -576,7 +622,7 @@ function getMyInfo() { const s = JSON.parse(localStorage.getItem('srh_settings')
 function showSavedInfo() { const el = document.getElementById('myInfoSaved'); el.style.display = 'block'; setTimeout(() => el.style.display = 'none', 3000); }
 function showTab(t) {
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active')); document.getElementById(t).classList.add('active'); window.scrollTo({top:0,behavior:'instant'});
-  if(t==='vault') renderVault(); if(t==='submit') { refreshPreview(); populateAdminEmailPicker(); } if(t==='cowriters') { loadFormUrl(); populatePicker('outreachSongPicker'); renderOutreach(); } if(t==='settings') { loadAllSettings(); renderSubscriptionStatus(); }
+  if(t==='vault') renderVault(); if(t==='submit') { refreshPreview(); populateAdminEmailPicker(); } if(t==='cowriters') { loadFormUrl(); populatePicker('outreachSongPicker'); renderOutreach(); } if(t==='settings') { loadAllSettings(); renderSubscriptionStatus(); loadPendingSubmissions(); }
 }
 function addWriter(data) {
   const c = document.getElementById('writersContainer'); const d = document.createElement('div'); d.className = 'writer-row'; const pctManual = data && data.pct ? '1' : '0';
@@ -705,10 +751,19 @@ function getInitials(name){return(name||'?').split(' ').map(n=>n[0]).join('').to
 function formatPhoneUS(p){ const d=(p||'').replace(/\D/g,''); const ten=d.length===11&&d.startsWith('1')?d.slice(1):d; if(ten.length!==10)return p||''; return `(${ten.slice(0,3)})${ten.slice(3,6)}-${ten.slice(6)}`; }
 function openOutreachForSong(idx) { showTab('cowriters'); const picker = document.getElementById('outreachSongPicker'); picker.value = idx; renderOutreach(); }
 function inviteCoWritersForCurrentSong() { if(editingIndex < 0) { showToast('Save the song first, then invite co-writers.', 'error'); return; } openOutreachForSong(editingIndex); }
+let outreachLinkMode = 'sheet';
+function setOutreachLinkMode(mode) { outreachLinkMode = mode; document.getElementById('linkModeSheetBtn').classList.toggle('active', mode==='sheet'); document.getElementById('linkModeAppBtn').classList.toggle('active', mode==='app'); renderOutreach(); }
 function renderOutreach() {
   const idx=document.getElementById('outreachSongPicker').value; const content=document.getElementById('outreachContent'); const empty=document.getElementById('outreachEmpty');
   if(idx===''){content.style.display='none';empty.style.display='block';return;} content.style.display='block'; empty.style.display='none';
-  const s=songs[parseInt(idx)]; const formUrl=getFormUrl(); const prefilledUrl = getPrefilledFormLink(s.title) || formUrl;
+  const s=songs[parseInt(idx)]; const formUrl=getFormUrl();
+  let prefilledUrl;
+  if(outreachLinkMode === 'app') {
+    prefilledUrl = getInAppSubmitLink(s);
+    if(!prefilledUrl) { document.getElementById('writerOutreachCards').innerHTML = `<div class="empty">Save this song to the vault first, then come back to generate its in-app link.</div>`; document.getElementById('globalLink').textContent = '—'; return; }
+  } else {
+    prefilledUrl = getPrefilledFormLink(s.title) || formUrl;
+  }
   document.getElementById('globalLink').textContent=prefilledUrl;
   const container=document.getElementById('writerOutreachCards'); container.innerHTML='';
   const cowriters=(s.writers||[]).filter(w=>w.name).slice(1);
@@ -827,6 +882,97 @@ async function ensureSubscriptionRow() {
     return null;
   }
 }
+function showPublicSubmitForm() {
+  document.getElementById('authOverlay').style.display = 'none';
+  document.querySelector('header.header').style.display = 'none';
+  document.querySelector('main.main').style.display = 'none';
+  document.getElementById('publicSongTitle').textContent = PUBLIC_SONG_TITLE || 'this song';
+  document.getElementById('publicSubmitView').style.display = 'flex';
+}
+async function submitPublicCoWriterInfo() {
+  const name = document.getElementById('pub_name').value.trim();
+  const errEl = document.getElementById('publicFormError'); errEl.style.display = 'none';
+  if(!name) { errEl.textContent = 'Please enter your name.'; errEl.style.display = 'block'; return; }
+  const payload = {
+    song_id: PUBLIC_SONG_ID, user_id: PUBLIC_OWNER_ID, writer_name: name,
+    ipi: document.getElementById('pub_ipi').value.trim(), pro: document.getElementById('pub_pro').value,
+    pct: document.getElementById('pub_pct').value.trim(),
+    pub_name: document.getElementById('pub_pubname').value.trim(), pub_ipi: document.getElementById('pub_pubipi').value.trim(), pub_pro: document.getElementById('pub_pubpro').value,
+    email: document.getElementById('pub_email').value.trim(), phone: document.getElementById('pub_phone').value.trim(),
+    status: 'pending'
+  };
+  const btn = document.querySelector('#publicFormFields .btn.gold'); if(btn) { btn.disabled = true; btn.textContent = 'Submitting...'; }
+  try {
+    const res = await fetch(`${SUPA_URL}/co_writer_submissions`, { method: 'POST', headers: { 'apikey': SUPA_KEY, 'Authorization': `Bearer ${SUPA_KEY}`, 'Content-Type': 'application/json', 'Accept-Profile': 'song_vault', 'Content-Profile': 'song_vault', 'Prefer': 'return=minimal' }, body: JSON.stringify(payload) });
+    if(!res.ok) { const err = await res.text(); throw new Error(err); }
+    document.getElementById('publicFormFields').style.display = 'none';
+    document.getElementById('publicFormThanks').style.display = 'block';
+  } catch(e) {
+    console.warn('Public submission failed:', e.message);
+    errEl.textContent = 'Something went wrong sending that — please try again in a moment.'; errEl.style.display = 'block';
+    if(btn) { btn.disabled = false; btn.textContent = 'Submit My Info'; }
+  }
+}
+function getInAppSubmitLink(song) {
+  if(!song || !song._id || !currentUser?.id) return null;
+  const base = window.location.origin + window.location.pathname;
+  return `${base}?cw_song=${encodeURIComponent(song._id)}&cw_owner=${encodeURIComponent(currentUser.id)}&cw_title=${encodeURIComponent(song.title||'')}`;
+}
+let pendingSubmissions = [];
+async function loadPendingSubmissions() {
+  if(!currentUser?.id) return;
+  try { pendingSubmissions = await supaFetch(`/co_writer_submissions?user_id=eq.${currentUser.id}&status=eq.pending&order=created_at.desc`); }
+  catch(e) { console.warn('Could not load in-app submissions (has the co_writer_submissions table been created yet?):', e.message); pendingSubmissions = []; }
+  renderPendingSubmissions();
+}
+function renderPendingSubmissions() {
+  const el = document.getElementById('pendingSubmissionsList'); if(!el) return;
+  const badge = document.getElementById('settingsPendingBadge'); if(badge) badge.textContent = pendingSubmissions.length ? ` (${pendingSubmissions.length})` : '';
+  if(!pendingSubmissions.length) { el.innerHTML = `<div class="hint">No pending submissions.</div>`; return; }
+  el.innerHTML = pendingSubmissions.map(sub => {
+    const song = songs.find(s => s._id === sub.song_id); const songLabel = song ? song.title : '(song not found in vault)';
+    const when = sub.created_at ? new Date(sub.created_at).toLocaleString() : '';
+    const details = [sub.ipi?`IPI: ${sub.ipi}`:'', sub.pro?`PRO: ${sub.pro}`:'', sub.pct?`Share: ${sub.pct}%`:'', sub.pub_name?`Pub: ${sub.pub_name}`:'', sub.email||'', sub.phone||''].filter(Boolean).join(' &middot; ');
+    return `<div class="outreach-card" style="margin-bottom:10px;">
+      <div class="outreach-header"><div><div class="writer-label">${sub.writer_name}</div><div class="writer-sublabel">for &ldquo;${songLabel}&rdquo; &middot; ${when}</div></div></div>
+      ${details?`<div class="hint" style="margin-bottom:10px;">${details}</div>`:''}
+      <div class="btn-row" style="margin-top:0;">
+        <button class="btn success" ${song?'':'disabled title="Song not found in your vault"'} onclick="mergeSubmission('${sub.id}')">Merge into Vault</button>
+        <button class="btn" onclick="dismissSubmission('${sub.id}')">Dismiss</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+async function mergeSubmission(subId) {
+  const sub = pendingSubmissions.find(s => s.id === subId); if(!sub) return;
+  const songIdx = songs.findIndex(s => s._id === sub.song_id);
+  if(songIdx < 0) { alert('Could not find that song in your vault — it may have been deleted. Dismiss this submission instead.'); return; }
+  const song = songs[songIdx];
+  let writerIdx = (song.writers||[]).findIndex(w => w.name.toLowerCase() === sub.writer_name.toLowerCase());
+  const existingWriter = writerIdx >= 0 ? song.writers[writerIdx] : null;
+  const updatedWriter = { name: sub.writer_name, ipi: sub.ipi||'', pro: sub.pro||'', pub_name: sub.pub_name||'', pub_ipi: sub.pub_ipi||'', pub_pro: sub.pub_pro||'' };
+  let pctNote = '';
+  if(!(existingWriter && existingWriter.pct)) { updatedWriter.pct = sub.pct||''; } else if(sub.pct && sub.pct !== existingWriter.pct) { pctNote = ` (kept your existing ${existingWriter.pct}% — submission had ${sub.pct}%, not overwritten)`; }
+  if(sub.pub_name) {
+    if(!song.publishers) song.publishers = [];
+    const existingPubIdx = song.publishers.findIndex(p => p.name.toLowerCase() === sub.pub_name.toLowerCase());
+    if(existingPubIdx >= 0) { const existingPub = song.publishers[existingPubIdx]; const pubPatch = { name: sub.pub_name, ipi: sub.pub_ipi||'', pro: sub.pub_pro||'', writer: sub.writer_name }; if(!existingPub.pct) { pubPatch.pct = sub.pct||''; } song.publishers[existingPubIdx] = { ...existingPub, ...pubPatch }; }
+    else { song.publishers.push({ name: sub.pub_name, ipi: sub.pub_ipi||'', pro: sub.pub_pro||'', pct: '', writer: sub.writer_name }); }
+  }
+  if(writerIdx >= 0) { song.writers[writerIdx] = { ...song.writers[writerIdx], ...updatedWriter }; } else { if(!song.writers) song.writers = []; song.writers.push(updatedWriter); }
+  if(!song.outreach) song.outreach = {}; if(!song.outreach[sub.writer_name]) song.outreach[sub.writer_name] = {};
+  song.outreach[sub.writer_name].status = 'responded';
+  if(sub.email) song.outreach[sub.writer_name].email = sub.email; if(sub.phone) song.outreach[sub.writer_name].phone = sub.phone;
+  await saveSongToSupabase(song);
+  try { await supaFetch(`/co_writer_submissions?id=eq.${sub.id}`, { method: 'PATCH', headers: { 'Prefer': 'return=minimal' }, body: JSON.stringify({ status: 'merged' }) }); } catch(e) { console.warn('Could not mark submission merged:', e.message); }
+  localStorage.setItem('srh_songs', JSON.stringify(songs));
+  showToast(`✓ Merged ${sub.writer_name}'s info into "${song.title}"${pctNote}`);
+  renderVault(); await loadPendingSubmissions();
+}
+async function dismissSubmission(subId) {
+  try { await supaFetch(`/co_writer_submissions?id=eq.${subId}`, { method: 'PATCH', headers: { 'Prefer': 'return=minimal' }, body: JSON.stringify({ status: 'dismissed' }) }); showToast('Submission dismissed'); await loadPendingSubmissions(); }
+  catch(e) { alert('Failed to dismiss: ' + e.message); }
+}
 let appStarted = false;
 async function startApp() {
   if(appStarted) return; appStarted = true;
@@ -834,6 +980,7 @@ async function startApp() {
   clearForm();
   loadAllSettings().then(() => { clearForm(); });
   loadWriters().then(() => loadSongsFromSupabase());
+  loadPendingSubmissions();
   ensureSubscriptionRow().then(() => { renderSubscriptionStatus(); if(document.getElementById('vault').classList.contains('active')) renderVault(); });
   setInterval(() => { loadSongsFromSupabase(true); }, 3 * 60 * 1000);
 }
@@ -851,6 +998,7 @@ supabaseClient.auth.onAuthStateChange((event, session) => {
   }
 });
 (async () => {
+  if(IS_PUBLIC_SUBMIT_VIEW) { showPublicSubmitForm(); return; }
   const { data: { session } } = await supabaseClient.auth.getSession();
   if(session) { await onAuthReady(session); }
 })();
