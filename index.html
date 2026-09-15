@@ -620,6 +620,7 @@ async function syncFromSheet() {
       const songIdx = songs.findIndex(s => s.title.trim().toLowerCase() === submittedSongTitle || s.title.trim().toLowerCase().includes(submittedSongTitle) || submittedSongTitle.includes(s.title.trim().toLowerCase()));
       if(songIdx < 0) { logSync(`Row ${ri+2}: Song "${row[songCol]}" not found in vault — skipped.`); unmatched++; return; }
       const song = songs[songIdx]; let writerIdx = (song.writers || []).findIndex(w => w.name.toLowerCase() === writerName.toLowerCase());
+      const beforeSnapshot = JSON.stringify(song);
       const updatedWriter = { name: writerName, ipi: ipiCol>=0?(row[ipiCol]||''):'', pro: proCol>=0?(row[proCol]||''):'', pct: pctCol>=0?(row[pctCol]||''):'', pub_name: pubCol>=0?(row[pubCol]||''):'', pub_ipi: pubIpiCol>=0?(row[pubIpiCol]||''):'', pub_pro: pubProCol>=0?(row[pubProCol]||''):'' };
       const pubName=pubCol>=0?(row[pubCol]||''):'', pubIpi=pubIpiCol>=0?(row[pubIpiCol]||''):'', pubPro=pubProCol>=0?(row[pubProCol]||''):'', pubPct=pubPctCol>=0?(row[pubPctCol]||''):'';
       if(pubName) { if(!songs[songIdx].publishers) songs[songIdx].publishers = []; const existingPubIdx = songs[songIdx].publishers.findIndex(p => p.name.toLowerCase() === pubName.toLowerCase()); if(existingPubIdx >= 0) { songs[songIdx].publishers[existingPubIdx] = { ...songs[songIdx].publishers[existingPubIdx], name: pubName, ipi: pubIpi, pro: pubPro, pct: pubPct, writer: writerName }; } else { songs[songIdx].publishers.push({ name: pubName, ipi: pubIpi, pro: pubPro, pct: pubPct, writer: writerName }); } logSync(`Updated publisher "${pubName}" on "${songs[songIdx].title}"`); }
@@ -627,7 +628,7 @@ async function syncFromSheet() {
       if(!songs[songIdx].outreach) songs[songIdx].outreach = {}; if(!songs[songIdx].outreach[writerName]) songs[songIdx].outreach[writerName] = {}; songs[songIdx].outreach[writerName].status = 'responded';
       if(emailCol >= 0 && row[emailCol]) { songs[songIdx].outreach[writerName].email = row[emailCol].trim(); logSync(`Saved email for "${writerName}": ${row[emailCol].trim()}`); }
       if(phoneCol >= 0 && row[phoneCol]) { songs[songIdx].outreach[writerName].phone = row[phoneCol].trim(); logSync(`Saved phone for "${writerName}": ${row[phoneCol].trim()}`); }
-      matched++; saveSongToSupabase(songs[songIdx]);
+      matched++; if(JSON.stringify(songs[songIdx]) !== beforeSnapshot) { saveSongToSupabase(songs[songIdx]); } else { logSync(`Row ${ri+2}: "${row[songCol]}" — already up to date, skipped.`); }
     });
     localStorage.setItem('srh_songs', JSON.stringify(songs)); const summary = `✓ Sync complete — ${matched} writer${matched!==1?'s':''} updated${unmatched>0?`, ${unmatched} unmatched rows`:''}`; setSyncStatus(summary, 'success'); logSync(summary); renderVault(); if(editingIndex >= 0 && document.getElementById('entry').classList.contains('active')) { loadSong(editingIndex); } showToast(summary);
   } catch(e) { setSyncStatus(`Sync error: ${e.message}`, 'error'); logSync(`Error: ${e.message}`); showToast(`Sync error: ${e.message}`, 'error'); }
