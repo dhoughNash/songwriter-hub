@@ -501,7 +501,7 @@ async function supaFetch(path, options={}) {
   const res = await fetch(`${SUPA_URL}${path}`, { ...options, headers: supaHeaders(options.headers||{}) });
   if(!res.ok) { const err = await res.text(); throw new Error(err); } const text = await res.text(); return text ? JSON.parse(text) : [];
 }
-function rowToSong(row) { return { _id: row.id, title: row.title||'', altTitle: row.alt_title||'', iswc: row.iswc||'', duration: row.duration||'', genre: row.genre||'', language: row.language||'English', releaseDate: row.release_date||'', isrc: row.isrc||'', upc: row.upc||'', artist: row.artist||'', album: row.album||'', label: row.label||'', distributor: row.distributor||'', lyrics: row.lyrics||'', bpm: row.bpm||'', key: row.key||'', instrumentation: row.instrumentation||'', mood: row.mood||'', writers: row.writers||[], publishers: row.publishers||[], outreach: row.outreach||{}, registrations: row.registrations||{} }; }
+function rowToSong(row) { return { _id: row.id, title: row.title||'', altTitle: row.alt_title||'', iswc: row.iswc||'', duration: row.duration||'', genre: row.genre||'', language: row.language||'English', releaseDate: row.release_date||'', isrc: row.isrc||'', upc: row.upc||'', artist: row.artist||'', album: row.album||'', label: row.label||'', distributor: row.distributor||'', lyrics: row.lyrics||'', bpm: row.bpm||'', key: row.key||'', instrumentation: row.instrumentation||'', mood: row.mood||'', writers: row.writers||[], publishers: row.publishers||[], outreach: row.outreach||{}, registrations: row.registrations||{}, updated_at: row.updated_at||null }; }
 function songToSupaRow(song) { return { title: song.title||'', alt_title: song.altTitle||'', iswc: song.iswc||'', duration: song.duration||'', genre: song.genre||'', language: song.language||'English', release_date: song.releaseDate||'', isrc: song.isrc||'', upc: song.upc||'', artist: song.artist||'', album: song.album||'', label: song.label||'', distributor: song.distributor||'', lyrics: song.lyrics||'', bpm: song.bpm||'', key: song.key||'', instrumentation: song.instrumentation||'', mood: song.mood||'', writers: song.writers||[], publishers: song.publishers||[], outreach: song.outreach||{}, registrations: song.registrations||{}, updated_at: new Date().toISOString() }; }
 async function loadSongsFromSupabase(silent=false) {
   try {
@@ -520,7 +520,7 @@ async function buildKnownCoWriters() {
 async function migratLocalToSupabase() { const local = JSON.parse(localStorage.getItem('srh_songs') || '[]'); if(!local.length) { showToast('No local songs to migrate', 'error'); return; } showToast(`Migrating ${local.length} songs...`, 'info'); let success = 0; for(const song of local) { if(!song._id) { const result = await saveSongToSupabase(song); if(result) success++; } } await loadSongsFromSupabase(); showToast(`✓ Migrated ${success} songs to Supabase`); }
 async function saveOutreachToSupabase(songIdx) { if(songs[songIdx]?._id) { await saveSongToSupabase(songs[songIdx]); } }
 async function saveSongToSupabase(song) {
-  try { const row = songToSupaRow(song); if(song._id) { await supaFetch(`/songs?id=eq.${song._id}`, { method: 'PATCH', body: JSON.stringify(row) }); } else { const insertRow = { ...row, writer_id: activeWriterId || null, user_id: currentUser?.id || null }; const result = await supaFetch('/songs', { method: 'POST', body: JSON.stringify(insertRow) }); if(result && result[0]) song._id = result[0].id; } localStorage.setItem('srh_songs', JSON.stringify(songs)); return true; }
+  try { song.updated_at = new Date().toISOString(); const row = songToSupaRow(song); row.updated_at = song.updated_at; if(song._id) { await supaFetch(`/songs?id=eq.${song._id}`, { method: 'PATCH', body: JSON.stringify(row) }); } else { const insertRow = { ...row, writer_id: activeWriterId || null, user_id: currentUser?.id || null }; const result = await supaFetch('/songs', { method: 'POST', body: JSON.stringify(insertRow) }); if(result && result[0]) song._id = result[0].id; } localStorage.setItem('srh_songs', JSON.stringify(songs)); return true; }
   catch(e) { console.warn('Supabase save failed:', e.message); showToast('Save to database failed — saved locally only', 'error'); return false; }
 }
 async function deleteSongFromSupabase(songId) { try { await supaFetch(`/songs?id=eq.${songId}`, { method: 'DELETE' }); return true; } catch(e) { console.warn('Supabase delete failed:', e.message); return false; } }
@@ -629,7 +629,7 @@ async function syncFromSheet() {
       if(phoneCol >= 0 && row[phoneCol]) { songs[songIdx].outreach[writerName].phone = row[phoneCol].trim(); logSync(`Saved phone for "${writerName}": ${row[phoneCol].trim()}`); }
       matched++; saveSongToSupabase(songs[songIdx]);
     });
-    localStorage.setItem('srh_songs', JSON.stringify(songs)); const summary = `✓ Sync complete — ${matched} writer${matched!==1?'s':''} updated${unmatched>0?`, ${unmatched} unmatched rows`:''}`; setSyncStatus(summary, 'success'); logSync(summary); renderVault(); if(editingIndex >= 0) { loadSong(editingIndex); } showToast(summary);
+    localStorage.setItem('srh_songs', JSON.stringify(songs)); const summary = `✓ Sync complete — ${matched} writer${matched!==1?'s':''} updated${unmatched>0?`, ${unmatched} unmatched rows`:''}`; setSyncStatus(summary, 'success'); logSync(summary); renderVault(); if(editingIndex >= 0 && document.getElementById('entry').classList.contains('active')) { loadSong(editingIndex); } showToast(summary);
   } catch(e) { setSyncStatus(`Sync error: ${e.message}`, 'error'); logSync(`Error: ${e.message}`); showToast(`Sync error: ${e.message}`, 'error'); }
   finally { document.querySelectorAll('[onclick="syncFromSheet()"]').forEach(btn => { btn.textContent = btn.dataset.orig || '↻ Sync from Sheet'; btn.disabled = false; }); }
 }
@@ -665,7 +665,7 @@ function renderVault() {
   const subEl = document.getElementById('vaultPageSub');
   if(subEl) { if(hasActiveAccess()) { subEl.textContent = 'Your registered catalog'; } else { const limit = getSongLimit(); subEl.innerHTML = `Your registered catalog &mdash; ${songs.length}/${limit} free songs used <a href="#" onclick="showTab('settings');return false;" style="color:var(--gold);">Subscribe for unlimited &rarr;</a>`; } }
   const list=document.getElementById('songsList'); const empty=document.getElementById('emptyVault'); list.innerHTML=''; if(!songs.length){empty.style.display='block';return;} empty.style.display='none';
-  const indexed = songs.map((s,i) => ({s, i})); if(vaultSort === 'alpha') { indexed.sort((a,b) => a.s.title.localeCompare(b.s.title)); }
+  const indexed = songs.map((s,i) => ({s, i})); if(vaultSort === 'alpha') { indexed.sort((a,b) => a.s.title.localeCompare(b.s.title)); } else { indexed.sort((a,b) => (b.s.updated_at||'').localeCompare(a.s.updated_at||'')); }
   indexed.forEach(({s,i})=>{
     const o=s.outreach||{};
     const activeCowriters=(s.writers||[]).filter(w=>w.name).slice(1);
