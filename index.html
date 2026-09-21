@@ -269,6 +269,13 @@ async function submitAuth() {
         <button class="btn gold" onclick="showTab('entry');clearForm()">+ New Song</button>
       </div>
     </div>
+    <div id="vaultSubmissionsCard" class="card" style="display:none;border-color:var(--gold);">
+      <div class="card-title" style="display:flex;align-items:center;justify-content:space-between;">
+        <span>&#128229; Pending Co-writer Submissions</span>
+        <button class="btn" style="font-size:11px;padding:4px 10px;" onclick="loadPendingSubmissions()">&#8635; Refresh</button>
+      </div>
+      <div id="pendingSubmissionsList"></div>
+    </div>
     <div style="margin-bottom:16px;">
       <button class="btn gold" style="width:100%;padding:14px 20px;font-size:15px;font-weight:600;letter-spacing:0.3px;" onclick="syncFromSheet()" title="Pull latest co-writer responses from your Google Sheet">&#8635; Sync Co-Writer Info from Spreadsheet</button>
     </div>
@@ -458,14 +465,6 @@ async function submitAuth() {
       <p class="hint" style="margin-top:10px;">Export saves a <code>.json</code> file to your Downloads. Import merges it back in &mdash; your local data always wins in conflicts.</p>
     </div>
     <div class="card">
-      <div class="card-title">&#128229; In-App Co-writer Submissions <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--gold);">(New)</span></div>
-      <p style="font-size:13px;color:var(--ink-light);line-height:1.6;margin-bottom:1rem;">Co-writers can fill out their info right in the app instead of a Google Form &mdash; it lands here for you to review and merge in, no spreadsheet involved. This runs alongside your Google Form setup below; use whichever link you want per song from the Co-writer Outreach page.</p>
-      <div id="pendingSubmissionsList"><div class="hint">No pending submissions.</div></div>
-      <div class="btn-row" style="margin-top:1rem;">
-        <button class="btn" onclick="loadPendingSubmissions()">&#8635; Refresh</button>
-      </div>
-    </div>
-    <div class="card">
       <div class="card-title">Google Sheets Connection</div>
       <div class="field-grid">
         <div class="field full-width"><label>Google Sheet ID</label><input type="text" id="sheetId" placeholder="e.g. 18wjPuoozuLmy0Z4BfMqk2HKkhqj87zgfr6XTSKOiqyo" oninput="saveSettings()"><span class="hint">Found in your Sheet's URL: docs.google.com/spreadsheets/d/<strong>[THIS PART]</strong>/edit</span></div>
@@ -622,7 +621,7 @@ function getMyInfo() { const s = JSON.parse(localStorage.getItem('srh_settings')
 function showSavedInfo() { const el = document.getElementById('myInfoSaved'); el.style.display = 'block'; setTimeout(() => el.style.display = 'none', 3000); }
 function showTab(t) {
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active')); document.getElementById(t).classList.add('active'); window.scrollTo({top:0,behavior:'instant'});
-  if(t==='vault') renderVault(); if(t==='submit') { refreshPreview(); populateAdminEmailPicker(); } if(t==='cowriters') { loadFormUrl(); populatePicker('outreachSongPicker'); renderOutreach(); } if(t==='settings') { loadAllSettings(); renderSubscriptionStatus(); loadPendingSubmissions(); }
+  if(t==='vault') { renderVault(); loadPendingSubmissions(); } if(t==='submit') { refreshPreview(); populateAdminEmailPicker(); } if(t==='cowriters') { loadFormUrl(); populatePicker('outreachSongPicker'); renderOutreach(); } if(t==='settings') { loadAllSettings(); renderSubscriptionStatus(); loadPendingSubmissions(); }
 }
 function addWriter(data) {
   const c = document.getElementById('writersContainer'); const d = document.createElement('div'); d.className = 'writer-row'; const pctManual = data && data.pct ? '1' : '0';
@@ -931,7 +930,8 @@ async function loadPendingSubmissions() {
 function renderPendingSubmissions() {
   const el = document.getElementById('pendingSubmissionsList'); if(!el) return;
   const badge = document.getElementById('settingsPendingBadge'); if(badge) badge.textContent = pendingSubmissions.length ? ` (${pendingSubmissions.length})` : '';
-  if(!pendingSubmissions.length) { el.innerHTML = `<div class="hint">No pending submissions.</div>`; return; }
+  const card = document.getElementById('vaultSubmissionsCard'); if(card) card.style.display = pendingSubmissions.length ? 'block' : 'none';
+  if(!pendingSubmissions.length) { el.innerHTML = ''; return; }
   el.innerHTML = pendingSubmissions.map(sub => {
     const song = songs.find(s => s._id === sub.song_id); const songLabel = song ? song.title : '(song not found in vault)';
     const when = sub.created_at ? new Date(sub.created_at).toLocaleString() : '';
